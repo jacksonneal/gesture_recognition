@@ -17,5 +17,5 @@ class Preprocessor:
         :return: None
         """
         datasets = glob.glob(os.path.join(src, "*.csv"))
-        joined = pd.concat([pd.read_csv(f) for f in datasets])
+        joined = pd.concat((pd.read_csv(f, header=None) for f in datasets), ignore_index=True)
         joined.to_csv(dest)

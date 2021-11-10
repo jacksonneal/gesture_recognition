@@ -11,3 +11,7 @@ freeze:
 # List dependencies
 list:
 	pip list
+
+# Run tests suite
+test:
+	python -m pytest tests

@@ -1,18 +1,18 @@
 # Makefile for Gesture Recognition project.
 
-# Install dependencies
+# Install dependencies.
 install:
 	pip install -r requirements.txt
 
-# Freeze dependencies
+# Freeze dependencies.
 freeze:
 	pip freeze > requirements.txt
 
-# List dependencies
+# List dependencies.
 list:
 	pip list
 
-# Run tests suite
+# Run tests suite.
 test:
 	python -m pytest tests
 
@@ -24,3 +24,7 @@ join-ds:
 # putting the results into the given destination dir.
 train-test-split:
 	python -m preprocessing.Preprocessor train_test_split $(src) $(dest) $(test_pct)
+
+# Lint python modules.
+lint:
+	pylint preprocessing.Preprocessor

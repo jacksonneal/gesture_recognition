@@ -1,7 +1,7 @@
 import os
 import sys
-import pandas as pd
 import glob
+import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 
@@ -14,7 +14,8 @@ class Preprocessor:
     @staticmethod
     def join_datasets(src, dest):
         """
-        Join the dataset csv's found in the given src directory and place the resulting csv at the destination path.
+        Join the dataset csv's found in the given src directory and place the resulting csv at
+        the destination path.
         :param src: path to directory of csv's to join
         :param dest: path to file destination to write joined result
         :return: None
@@ -26,18 +27,20 @@ class Preprocessor:
     @staticmethod
     def train_test_split(src, dest, test_pct):
         """
-        Split the dataset src file given into the given percentage of test and train examples, placing the result in the
+        Split the dataset src file given into the given percentage of test and train examples,
+        placing the result in the
         given destination directory.
         :param src: dataset file to split
         :param dest: directory to put splits
         :param test_pct: percentage of examples to be test
         :return: None
         """
-        df = pd.read_csv(src)
-        df = df.sample(frac=1)  # Shuffle
-        data = np.asarray(df.iloc[:, :-1])
-        labels = np.asarray(df.iloc[:, -1])
-        x_train, x_test, y_train, y_test = train_test_split(data, labels, test_size=float(test_pct), random_state=42)
+        dataframe = pd.read_csv(src)
+        dataframe = dataframe.sample(frac=1)  # Shuffle
+        data = np.asarray(dataframe.iloc[:, :-1])
+        labels = np.asarray(dataframe.iloc[:, -1])
+        x_train, x_test, y_train, y_test = train_test_split(data, labels, test_size=float(test_pct),
+                                                            random_state=42)
         train = np.column_stack((x_train, y_train))
         test = np.column_stack((x_test, y_test))
         pd.DataFrame(train).to_csv(os.path.join(dest, "train.csv"))

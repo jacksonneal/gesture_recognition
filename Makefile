@@ -18,13 +18,13 @@ test:
 
 # Join the datasets in the given src directory and place them in the given dest file.
 join-ds:
-	python -m preprocessing.Preprocessor join $(src) $(dest)
+	python -m preprocessing.preprocessor join $(src) $(dest)
 
 # Split the dataset src file given into the given percentage of test examples and train examples,
 # putting the results into the given destination dir.
 train-test-split:
-	python -m preprocessing.Preprocessor train_test_split $(src) $(dest) $(test_pct)
+	python -m preprocessing.preprocessor train_test_split $(src) $(dest) $(test_pct)
 
 # Lint python modules.
 lint:
-	pylint preprocessing.Preprocessor
+	pylint preprocessing.preprocessor --disable=missing-docstring

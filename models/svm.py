@@ -1,6 +1,6 @@
 class SVM:
     """
-    Support Vector Model trained through gradient descent.
+    Support Vector Machine model trained through gradient descent.
     """
 
     def __init__(self, lr=1e-3, max_iter=1000, kernel_type="rbf", c=1, sigma=1, d=3):

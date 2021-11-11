@@ -36,7 +36,7 @@ All of the build & execution commands are organized in the Makefile.
     - `make install`
     - installs dependencies from `requirements.txt` using pip
 6) Join separate gesture datasets:
-    - `make join-ds src=.\datasets\initial\ dest=.\datasets\joined\joined.csv`
+    - `make join-ds src=.\datasets\initial dest=.\datasets\joined\joined.csv`
     - only need to run once
 7) Generate train and test datasets:
     - `make train-test-split src=.\datasets\joined\joined.csv dest=.\datasets\train_test_split test_pct=0.20`

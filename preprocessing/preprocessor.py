@@ -22,7 +22,7 @@ class Preprocessor:
         """
         datasets = glob.glob(os.path.join(src, "*.csv"))
         joined = pd.concat((pd.read_csv(f, header=None) for f in datasets), ignore_index=True)
-        joined.to_csv(dest)
+        joined.to_csv(dest, header=False, index=False)
 
     @staticmethod
     def train_test_split(src, dest, test_pct):
@@ -35,7 +35,7 @@ class Preprocessor:
         :param test_pct: percentage of examples to be test
         :return: None
         """
-        dataframe = pd.read_csv(src)
+        dataframe = pd.read_csv(src, header=None)
         dataframe = dataframe.sample(frac=1)  # Shuffle
         data = np.asarray(dataframe.iloc[:, :-1])
         labels = np.asarray(dataframe.iloc[:, -1])
@@ -43,8 +43,8 @@ class Preprocessor:
                                                             random_state=42)
         train = np.column_stack((x_train, y_train))
         test = np.column_stack((x_test, y_test))
-        pd.DataFrame(train).to_csv(os.path.join(dest, "train.csv"))
-        pd.DataFrame(test).to_csv(os.path.join(dest, "test.csv"))
+        pd.DataFrame(train).to_csv(os.path.join(dest, "train.csv"), header=False, index=False)
+        pd.DataFrame(test).to_csv(os.path.join(dest, "test.csv"), header=False, index=False)
 
 
 if __name__ == "__main__":

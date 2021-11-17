@@ -35,7 +35,6 @@ class SVM:
         :param y: nXm dataset of n entries, each with m features
         :return: kernel mapping
         """
-        # TODO: inspect shape before/after linalg
         return np.exp(
             -(1 / 2 * self.sigma ** 2) * np.linalg.norm(x[:, np.newaxis] - y[np.newaxis, :],
                                                         axis=2) ** 2)
@@ -47,7 +46,6 @@ class SVM:
         :param y: nXm dataset of n entries, each with m features
         :return: kernel mapping
         """
-        # TODO: inspect what inner does
         return (np.inner(x, y) + self.c) ** self.d
 
     @staticmethod
@@ -66,7 +64,6 @@ class SVM:
         :param x: nXm dataset of n entries, each with m features
         :return: decisions
         """
-        # TODO: make sure we understand derivation of decision function
         return (self.alpha * self.y).dot(self.kernel(self.x, x))
 
     def predict(self, x):
@@ -75,7 +72,6 @@ class SVM:
         :param x: feature vectors
         :return: 0 or 1 based on decision function result
         """
-        # TODO: understand why we use sign here
         return np.sign((self.alpha * self.y).dot(self.kernel(self.x, x)))
 
     def _compute_cost(self):
@@ -83,8 +79,6 @@ class SVM:
         Compute the dual hinge loss.
         :return: cost
         """
-        # TODO: understand what np.outer does
-        # TODO: understand derivation of dual hinge loss
         return np.sum(self.alpha) - (1 / 2) * np.sum(np.outer(self.alpha, self.alpha) * self.yyk)
 
     def train(self, input_var, label, print_iter=5000):
@@ -102,7 +96,6 @@ class SVM:
         self.y = label
 
         # precompute (y_j)(y_k)(K(x_j, x_k))
-        # TODO: understand np.outer
         self.yyk = np.outer(label, label) * self.kernel(self.x, self.x)
 
         costs = []

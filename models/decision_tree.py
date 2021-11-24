@@ -1,6 +1,8 @@
+import os
 import sys
 import pandas as pd
 import numpy as np
+from multiprocessing import Pool
 from scipy import stats
 from sklearn.metrics import accuracy_score
 from preprocessing.preprocessor import Preprocessor
@@ -32,6 +34,24 @@ class Node:
         self.value = value
 
 
+class Engine(object):
+
+    def __init__(self, dataset):
+        self.dataset = dataset
+
+    def __call__(self, p):
+        feature_index, sample_index = p
+        threshold = self.dataset[sample_index][feature_index]
+        dataset_left, dataset_right = DecisionTreeClassifier.split(self.dataset, feature_index,
+                                                                   threshold)
+        info_gain = DecisionTreeClassifier.information_gain(self.dataset[:, -1],
+                                                            dataset_left[:, -1],
+                                                            dataset_right[:, -1])
+        split = {"dataset_right": dataset_right, "dataset_left": dataset_left,
+                 "feature_index": feature_index, "threshold": threshold, "info_gain": info_gain}
+        return split
+
+
 class DecisionTreeClassifier:
     def __init__(self, min_samples_split=2, max_depth=2):
         """
@@ -42,6 +62,8 @@ class DecisionTreeClassifier:
         self.root = None
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
+        self.pool = Pool(os.cpu_count())  # on 8 processors
+        print(os.cpu_count())
         # End code here
 
     def build_tree(self, dataset, cur_depth=0):
@@ -90,31 +112,29 @@ class DecisionTreeClassifier:
         num_features: Number of features in the dataset
         Returns the best split
         """
-
-        # dictionary to store the best split and its details
-        best_split = {}
-        max_info_gain = -float("inf")
-
         # Start code here
         # loop over all the features in the data
+        splits = []
         for feature_index in range(num_features):
             for sample_index in range(num_samples):
-                threshold = dataset[sample_index][feature_index]
-                dataset_left, dataset_right = self.split(dataset, feature_index, threshold)
-                info_gain = self.information_gain(dataset[:, -1], dataset_left[:, -1],
-                                                  dataset_right[:, -1])
-                if info_gain > max_info_gain:
-                    best_split["dataset_right"] = dataset_right
-                    best_split["dataset_left"] = dataset_left
-                    best_split["feature_index"] = feature_index
-                    best_split["threshold"] = threshold
-                    best_split["info_gain"] = info_gain
-                    max_info_gain = info_gain
+                splits.append((feature_index, sample_index))
+
+        res = None
+        # try:
+        pool = self.pool
+        engine = Engine(dataset)
+        res = pool.map(engine, splits)
+        # finally:  # To make sure processes are closed in the end, even if errors happen
+        # pool.close()
+        # pool.join()
+
+        best_split = max(res, key=lambda x: x["info_gain"])
         # End code here
 
         return best_split
 
-    def split(self, dataset, feature_index, threshold):
+    @staticmethod
+    def split(dataset, feature_index, threshold):
         """
         Function to split the data to the left child and right child in the decision tree
         dataset: input data
@@ -129,13 +149,27 @@ class DecisionTreeClassifier:
         # Hint: Use list comprehension to distinguish which values would be present in left and
         # right
         # subtree on the basis of threshold
-        dataset_left, dataset_right = self.split_helper(dataset,
-                                                        dataset[:, feature_index] <= threshold)
+        dataset_left, dataset_right = DecisionTreeClassifier.split_helper(dataset,
+                                                                          dataset[:,
+                                                                          feature_index] <=
+                                                                          threshold)
         # End code here
 
         return dataset_left, dataset_right
 
-    def split_helper(self, arr, cond):
+    @staticmethod
+    def eval_split(dataset, feature_index, sample_index):
+        threshold = dataset[sample_index][feature_index]
+        dataset_left, dataset_right = DecisionTreeClassifier.split(dataset, feature_index,
+                                                                   threshold)
+        info_gain = DecisionTreeClassifier.information_gain(dataset[:, -1], dataset_left[:, -1],
+                                                            dataset_right[:, -1])
+        split = {"dataset_right": dataset_right, "dataset_left": dataset_left,
+                 "feature_index": feature_index, "threshold": threshold, "info_gain": info_gain}
+        return split
+
+    @staticmethod
+    def split_helper(arr, cond):
         """
         Function to split array based on boolean conditional array.
         arr: to split
@@ -144,7 +178,8 @@ class DecisionTreeClassifier:
         """
         return [arr[cond], arr[~cond]]
 
-    def information_gain(self, parent, l_child, r_child, mode="entropy"):
+    @staticmethod
+    def information_gain(parent, l_child, r_child, mode="entropy"):
         """
         Function to calculate information gain. This function subtracts the combined information
         of the child node from the parent node.
@@ -161,14 +196,17 @@ class DecisionTreeClassifier:
         """
         # Start code here
         if mode == "gini":
-            gain = self.gini_index(parent) - self.gini_index(l_child) - self.gini_index(r_child)
+            gain = DecisionTreeClassifier.gini_index(parent) - DecisionTreeClassifier.gini_index(
+                l_child) - DecisionTreeClassifier.gini_index(r_child)
         else:
-            gain = self.entropy(parent) - self.entropy(l_child) - self.entropy(r_child)
+            gain = DecisionTreeClassifier.entropy(parent) - DecisionTreeClassifier.entropy(
+                l_child) - DecisionTreeClassifier.entropy(r_child)
         # End code here
 
         return gain
 
-    def entropy(self, y):
+    @staticmethod
+    def entropy(y):
         """
         Function to calculate the entropy. Extracts the class labels and
         calculates the entropy.
@@ -183,7 +221,8 @@ class DecisionTreeClassifier:
 
         return entropy
 
-    def gini_index(self, y):
+    @staticmethod
+    def gini_index(y):
         """
         Function to calculate gini index. Extracts the class labels and
         calculates the gini index.

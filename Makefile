@@ -28,3 +28,11 @@ train-test-split:
 # Lint python modules.
 lint:
 	pylint preprocessing.preprocessor --disable=missing-docstring
+
+# Train SVM model with the given file
+svm-train:
+	python -m models.svm train_model $(file_name)
+
+# Test SVM model with the given file
+svm-test:
+	python -m models.svm test_model $(file_name)

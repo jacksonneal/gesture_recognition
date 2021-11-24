@@ -1,4 +1,8 @@
+import sys
 import numpy as np
+from matplotlib import pyplot as plt
+
+from preprocessing.preprocessor import Preprocessor
 
 
 class SVM:
@@ -81,7 +85,7 @@ class SVM:
         """
         return np.sum(self.alpha) - (1 / 2) * np.sum(np.outer(self.alpha, self.alpha) * self.yyk)
 
-    def train(self, input_var, label, print_iter=5000):
+    def train(self, input_var, label, print_iter=500):
         """
         Train the model using batch gradient ascent.
         :param input_var: nXm feature vectors
@@ -129,3 +133,45 @@ class SVM:
         """
         prediction = self.predict(SVM._x_bar(input_test))
         return np.mean(label_test == prediction)
+
+
+if __name__ == '__main__':
+    print(sys.argv)
+    X_train, y_train = Preprocessor.access_data_labels(sys.argv[1])
+
+    # Train to identify class 1 vs all
+    y_train[y_train != 1] = -1
+
+    svm = SVM(max_iter=0)
+
+    # costs, alpha = svm.train(X_train, y_train)
+
+    # plt.plot(costs)
+    # plt.title("cost per epochs * pint_iter")
+    # plt.show()
+    #
+    # X_test, y_test = Preprocessor.access_data_labels(sys.argv[2])
+    # print(f'Accuracy {svm.test(X_test, y_test)}')
+    #
+    # # Plot points
+    # plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=plt.cm.Paired, alpha=.5)
+    # ax = plt.gca()
+    # xlim = ax.get_xlim()
+    # ylim = ax.get_ylim()
+    #
+    # # Create mesh
+    # xx = np.linspace(xlim[0], xlim[1], 30)
+    # yy = np.linspace(ylim[0], ylim[1], 30)
+    # YY, XX = np.meshgrid(yy, xx)
+    # xy = np.vstack([XX.ravel(), YY.ravel()]).T
+    # Z = (alpha * y_train).dot(svm.kernel(X_train, xy)).reshape(XX.shape)
+    #
+    # # Plot boundaries
+    # ax.contour(XX, YY, Z, colors=['b', 'g', 'r'], levels=[-1, 0, 1], alpha=0.5,
+    #            linestyles=['--', '-', '--'], linewidths=[1.0, 1.0, 1.0])
+    #
+    # # Outline support vectors with nonzero alpha
+    # ax.scatter(X_train[:, 0][alpha > 0.], X_train[:, 1][alpha > 0.],
+    #            linewidth=1, facecolors='none', edgecolors='k')
+    #
+    # plt.show()

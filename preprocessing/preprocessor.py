@@ -46,6 +46,16 @@ class Preprocessor:
         pd.DataFrame(train).to_csv(os.path.join(dest, "train.csv"), header=False, index=False)
         pd.DataFrame(test).to_csv(os.path.join(dest, "test.csv"), header=False, index=False)
 
+    @staticmethod
+    def access_data_labels(file):
+        """
+        Access the separate data and labels of the given file.
+        :param file: to read
+        :return: data, labels
+        """
+        df = pd.read_csv(file, header=None)
+        return df.iloc[:, :-1], df.iloc[:, -1]
+
 
 if __name__ == "__main__":
     if sys.argv[1] == "join":

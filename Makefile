@@ -27,7 +27,7 @@ train-test-split:
 
 # Lint python modules.
 lint:
-	pylint preprocessing.preprocessor --disable=missing-docstring
+	pylint preprocessing.preprocessor --disable=missing-docstring --disable=no-member
 
 # Run Model
 model:

@@ -53,8 +53,8 @@ class Preprocessor:
         :param file: to read
         :return: data, labels
         """
-        df = pd.read_csv(file, header=None)
-        return df.iloc[:, :-1].values, df.iloc[:, -1].values.reshape(-1, 1)
+        dataframe = pd.read_csv(file, header=None)
+        return dataframe.iloc[:, :-1].values, dataframe.iloc[:, -1].values.reshape(-1, 1)
 
 
 if __name__ == "__main__":

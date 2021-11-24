@@ -29,6 +29,6 @@ train-test-split:
 lint:
 	pylint preprocessing.preprocessor --disable=missing-docstring
 
-# Run Decision Tree
-decision-tree:
-	python -m models.decision_tree $(train_file) $(test_file)
+# Run Model
+model:
+	python -m models $(ARGS)

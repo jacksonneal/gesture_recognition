@@ -41,5 +41,7 @@ All of the build & execution commands are organized in the Makefile.
     - `make train-test-split src=.\datasets\joined\joined.csv dest=.\datasets\train_test_split test_pct=0.20`
 8) Run tests through pytest:
     - `make test`
-9) Run Decision Tree:
-    - `make decision-tree train_file=.\datasets\train_test_split\train.csv test_file=.\datasets\train_test_split\test.csv`
+9) Run DecisionTree Train and Save:
+    - `python -m models decision-tree train .\datasets\sample\train.csv .\serialized\tree.json`
+10) Run DecisionTree Load and Test:
+    - `python -m models decision-tree test .\serialized\tree.json .\datasets\sample\test.csv`

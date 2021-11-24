@@ -29,10 +29,6 @@ train-test-split:
 lint:
 	pylint preprocessing.preprocessor --disable=missing-docstring
 
-# Train SVM model with the given file
-svm-train:
-	python -m models.svm train_model $(file_name)
-
-# Test SVM model with the given file
-svm-test:
-	python -m models.svm test_model $(file_name)
+# Run Decision Tree
+decision-tree:
+	python -m models.decision_tree $(train_file) $(test_file)

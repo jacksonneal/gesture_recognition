@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import json
+import random
 from abc import ABC, abstractmethod
 from multiprocessing import Pool
 from scipy import stats
@@ -159,7 +160,7 @@ class DecisionTreeClassifier(Algo):
         self.root = root
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
-        self.pool = Pool(min(20, os.cpu_count()))
+        self.pool = Pool(min(20, os.cpu_count() - 1))
 
     def __del__(self):
         """
@@ -219,9 +220,13 @@ class DecisionTreeClassifier(Algo):
         for feature_index in range(num_features):
             for sample_index in range(num_samples):
                 split_params.append((feature_index, sample_index))
+                
+        if len(split_params) > 50000:
+            split_params = random.sample(split_params, 10000)
 
         split_engine = SplitEngine(dataset)
         splits = self.pool.map(split_engine, split_params)
+
         return max(splits, key=lambda x: x["info_gain"])
 
     @staticmethod

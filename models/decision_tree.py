@@ -159,7 +159,7 @@ class DecisionTreeClassifier(Algo):
         self.root = root
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
-        self.pool = Pool(os.cpu_count())
+        self.pool = Pool(min(20, os.cpu_count()))
 
     def __del__(self):
         """

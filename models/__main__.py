@@ -26,6 +26,9 @@ if __name__ == '__main__':
                              "(train, training csv, destination for trained model)"
                              "(test, model file to load, test csv)")
 
+    # Optional print model
+    parser.add_argument("--print", action="store_true", help="Debug print.")
+
     # DecisionTree Argument: Min instances in node
     parser.add_argument("--min-split", type=int, default=2, dest="min_split",
                         help="Min instances in node of tree.")
@@ -34,18 +37,24 @@ if __name__ == '__main__':
     parser.add_argument("--max-depth", type=int, default=3, dest="max_depth",
                         help="Max depth of decision tree.")
 
+    # DecisionTree Argument: Max split evaluations
+    parser.add_argument("--max-split-eval", type=int, default=1000, dest="max_split_eval",
+                        help="Max split evaluations when determining node config.")
+
     opts = parser.parse_args()
 
     model = None
     if opts.action[0] == "train":
         if opts.model == Model.decision_tree:
-            model = DecisionTreeClassifier(opts.min_split, opts.max_depth)
+            model = DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval)
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 
         X_train, y_train = Preprocessor.access_data_labels(opts.action[1])
         model.fit(X_train, y_train)
         model.save(opts.action[2])
+        if opts.print:
+            model.print()
 
     elif opts.action[0] == "test":
         if opts.model == Model.decision_tree:
@@ -54,7 +63,8 @@ if __name__ == '__main__':
             raise ValueError(f"Unsupported model type {opts.model}")
 
         X_test, y_test = Preprocessor.access_data_labels(opts.action[2])
-        model.print()
+        if opts.print:
+            model.print()
         predictions = model.predict(X_test)
         print("Accuracy is: " + str(accuracy_score(y_test, predictions)))
 

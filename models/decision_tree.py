@@ -150,16 +150,19 @@ class DecisionTreeClassifier(Algo):
         else:
             return DecisionTreeClassifier(dct["min_samples_split"], dct["max_depth"], dct["root"])
 
-    def __init__(self, min_samples_split=2, max_depth=2, root=None):
+    def __init__(self, min_samples_split=2, max_depth=2, max_split_eval=1000, root=None):
         """
         Initialize the root of the decision tree to None and initialize the
         stopping conditions.
         :param min_samples_split: min samples in a decision node
         :param max_depth: max vertical depth of decision tree
+        :param max_split_eval: max comparisons when determining split vals
+        :param root: root node
         """
         self.root = root
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
+        self.max_split_eval = max_split_eval
         self.pool = Pool(min(20, os.cpu_count() - 1))
 
     def __del__(self):
@@ -220,9 +223,9 @@ class DecisionTreeClassifier(Algo):
         for feature_index in range(num_features):
             for sample_index in range(num_samples):
                 split_params.append((feature_index, sample_index))
-                
-        if len(split_params) > 50000:
-            split_params = random.sample(split_params, 10000)
+
+        if len(split_params) > self.max_split_eval * 2:
+            split_params = random.sample(split_params, self.max_split_eval)
 
         split_engine = SplitEngine(dataset)
         splits = self.pool.map(split_engine, split_params)

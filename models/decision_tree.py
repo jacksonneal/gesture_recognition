@@ -148,7 +148,8 @@ class DecisionTreeClassifier(Algo):
                                 dct["left"], dct["right"],
                                 dct["info_gain"])
         else:
-            return DecisionTreeClassifier(dct["min_samples_split"], dct["max_depth"], dct["root"])
+            return DecisionTreeClassifier(dct["min_samples_split"], dct["max_depth"],
+                                          dct["max_split_eval"], dct["root"])
 
     def __init__(self, min_samples_split=2, max_depth=2, max_split_eval=1000, root=None):
         """

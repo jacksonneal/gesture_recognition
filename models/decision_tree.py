@@ -129,7 +129,8 @@ class DecisionTreeClassifier(Algo):
         obj = {
             "root": self.root,
             "min_samples_split": self.min_samples_split,
-            "max_depth": self.max_depth
+            "max_depth": self.max_depth,
+            "max_split_eval": self.max_split_eval
         }
         with open(dest, "w") as f:
             json.dump(obj, f, default=lambda o: o.__dict__, sort_keys=True, indent=4)

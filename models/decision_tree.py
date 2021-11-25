@@ -161,6 +161,14 @@ class DecisionTreeClassifier(Algo):
         self.max_depth = max_depth
         self.pool = Pool(os.cpu_count())
 
+    def __del__(self):
+        """
+        Destructor close thread pool.
+        :return: None
+        """
+        self.pool.close()
+        self.pool.join()
+
     def build_tree(self, dataset, cur_depth=0):
         """
         Recursive function to build decision tree.

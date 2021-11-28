@@ -1,8 +1,13 @@
 import numpy as np
+import pandas as pd
+
+from sklearn.metrics import accuracy_score
+from preprocessing.preprocessor import Preprocessor
 
 
 class NaiveBayesClassifier:
-    def compute_mean(self, nums):
+    @staticmethod
+    def compute_mean(nums):
         """
         Function to compute the mean of a list of values
         nums: list of values
@@ -11,7 +16,8 @@ class NaiveBayesClassifier:
         """
         return np.average(nums)
 
-    def compute_standard_deviation(self, nums):
+    @staticmethod
+    def compute_standard_deviation(nums):
         """
         Function to compute the standard deviation of a list of values
         nums: list of values
@@ -28,13 +34,13 @@ class NaiveBayesClassifier:
         Returns a dictionary having mapping for each class value to the list of
         records it is present in.
         """
-        keys = np.unique(np.array(dataset)[:, 4])
+        keys = np.unique(np.array(dataset)[:, class_column])
         split_data = {}
         for value in keys:
             split_data[value] = list()
 
         for i in range(len(dataset)):
-            split_data[dataset[i][4]].append(dataset[i][:4])
+            split_data[dataset[i][class_column]].append(dataset[i][:class_column])
 
         return split_data
 
@@ -50,7 +56,7 @@ class NaiveBayesClassifier:
         dataset = np.array(dataset)
         stats = list()
         count = np.shape(dataset)[0]
-        for column_index in range(len(dataset[i])):
+        for column_index in range(len(dataset[0])):
             column_data = dataset[:, column_index]
             mean = self.compute_mean(column_data)
             std_dev = self.compute_standard_deviation(column_data)
@@ -67,16 +73,14 @@ class NaiveBayesClassifier:
         """
         self.model = {}
         self.training_data_len = len(dataset)
-        split_data = self.splitup_dataset(dataset, 4)
+        split_data = self.splitup_dataset(dataset, 64)
         for class_value in split_data:
             self.model[class_value] = self.calculate_stats(split_data[class_value])
 
-    def probability(self, x, mean, std_dev):
+    @staticmethod
+    def probability(x, mean, std_dev):
         """
-        When dealing with continuous data we can assume that continuous values
-        associated with each class are distributed according to a Gaussian distribution.
-        In this function we calculate the probability of having a value in a class.
-        x: the value for which probability has to be computed
+        Helper for prediction
         mean: the calculated mean
         std_dev: the calculated std_dev
         Returns the probability of x in the class for the given mean and standard deviation
@@ -99,7 +103,7 @@ class NaiveBayesClassifier:
 
         return probability
 
-    def predict(self, record):
+    def make_prediction(self, record):
         """
         This function predicts the class to which the given record
         belongs.
@@ -116,12 +120,21 @@ class NaiveBayesClassifier:
 
         return best_option
 
-    def train(self, dataset):
+    def fit(self, X, Y):
+        dataset = np.concatenate((X, Y), axis=1)
         self.calculate_stats_by_class(dataset)
 
-    def test(self, test):
+    def predict(self, test):
         predictions = list()
         for row in test:
-            output = self.predict(row)
+            output = self.make_prediction(row)
             predictions.append(output)
         return predictions
+
+
+X_train, y_train = Preprocessor.access_data_labels("..\\datasets\\train_test_split\\train.csv")
+classifier = NaiveBayesClassifier()
+classifier.fit(X_train, y_train)
+X_test, y_test = Preprocessor.access_data_labels("..\\datasets\\train_test_split\\test.csv")
+predictions = classifier.predict(X_test)
+print("Accuracy is: " + str(accuracy_score(y_test, predictions)))

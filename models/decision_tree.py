@@ -92,12 +92,13 @@ class SplitEngine:
     multiprocessing pool.
     """
 
-    def __init__(self, dataset):
+    def __init__(self, dataset, mode):
         """
         Configure the dataset that we will evaluate splits for.
         :param dataset:
         """
         self.dataset = dataset
+        self.mode = mode
 
     def __call__(self, params):
         """
@@ -111,7 +112,8 @@ class SplitEngine:
                                                                    threshold)
         info_gain = DecisionTreeClassifier.information_gain(self.dataset[:, -1],
                                                             dataset_left[:, -1],
-                                                            dataset_right[:, -1])
+                                                            dataset_right[:, -1],
+                                                            self.mode)
         split = {"dataset_right": dataset_right, "dataset_left": dataset_left,
                  "feature_index": feature_index, "threshold": threshold, "info_gain": info_gain}
         return split
@@ -130,7 +132,8 @@ class DecisionTreeClassifier(Algo):
             "root": self.root,
             "min_samples_split": self.min_samples_split,
             "max_depth": self.max_depth,
-            "max_split_eval": self.max_split_eval
+            "max_split_eval": self.max_split_eval,
+            "mode": self.mode
         }
         with open(dest, "w") as f:
             json.dump(obj, f, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -150,9 +153,10 @@ class DecisionTreeClassifier(Algo):
                                 dct["info_gain"])
         else:
             return DecisionTreeClassifier(dct["min_samples_split"], dct["max_depth"],
-                                          dct["max_split_eval"], dct["root"])
+                                          dct["max_split_eval"], dct["root"], dct["mode"] == "gini")
 
-    def __init__(self, min_samples_split=2, max_depth=2, max_split_eval=1000, root=None):
+    def __init__(self, min_samples_split=2, max_depth=2, max_split_eval=1000, root=None,
+                 use_gini=False):
         """
         Initialize the root of the decision tree to None and initialize the
         stopping conditions.
@@ -166,6 +170,7 @@ class DecisionTreeClassifier(Algo):
         self.max_depth = max_depth
         self.max_split_eval = max_split_eval
         self.pool = Pool(min(40, os.cpu_count() - 1))
+        self.mode = "gini" if use_gini else "entropy"
 
     def __del__(self):
         """
@@ -218,7 +223,7 @@ class DecisionTreeClassifier(Algo):
             parallel.
         :param dataset: input data
         :param num_samples: num samples in dataset
-        :param num_features: num features per sample
+        :param num_features: num features per sample_prob
         :return: best split
         """
         split_params = []
@@ -229,7 +234,7 @@ class DecisionTreeClassifier(Algo):
         if len(split_params) > self.max_split_eval * 2:
             split_params = random.sample(split_params, self.max_split_eval)
 
-        split_engine = SplitEngine(dataset)
+        split_engine = SplitEngine(dataset, self.mode)
         splits = self.pool.map(split_engine, split_params)
 
         return max(splits, key=lambda x: x["info_gain"])

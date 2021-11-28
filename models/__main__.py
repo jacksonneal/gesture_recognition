@@ -41,12 +41,16 @@ if __name__ == '__main__':
     parser.add_argument("--max-split-eval", type=int, default=1000, dest="max_split_eval",
                         help="Max split evaluations when determining node config.")
 
+    # DecisionTree Argument: GiniIndex
+    parser.add_argument("--gini", action="store_true", help="Use gini index instead of entropy.")
+
     opts = parser.parse_args()
 
     model = None
     if opts.action[0] == "train":
         if opts.model == Model.decision_tree:
-            model = DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval)
+            model = DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval,
+                                           None, opts.gini)
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 

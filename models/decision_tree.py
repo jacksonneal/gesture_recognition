@@ -6,7 +6,7 @@ import random
 from abc import ABC, abstractmethod
 from multiprocessing import Pool
 from scipy import stats
-from models.model import Algo
+from models.model import Algo, Model
 
 
 class Node(ABC):
@@ -129,6 +129,7 @@ class DecisionTreeClassifier(Algo):
 
     def save(self, dest):
         obj = {
+            "type": Model.decision_tree,
             "root": self.root,
             "min_samples_split": self.min_samples_split,
             "max_depth": self.max_depth,

@@ -1,4 +1,6 @@
 import argparse
+
+from models.bagging import Bagging
 from preprocessing.preprocessor import Preprocessor
 from models.decision_tree import DecisionTreeClassifier
 from enum import Enum
@@ -44,6 +46,13 @@ if __name__ == '__main__':
     # DecisionTree Argument: GiniIndex
     parser.add_argument("--gini", action="store_true", help="Use gini index instead of entropy.")
 
+    # Bagging Argument: Number of bootstrapped samples per model
+    parser.add_argument("--k", type=int, default=1000, help="Num bootstrapped samples per model.")
+
+    # Bagging Argument: Number of DecisionTrees to run
+    parser.add_argument("--n-dt", type=int, default=10, dest="num_decision_trees",
+                        help="Number of decision trees in ensemble.")
+
     opts = parser.parse_args()
 
     model = None
@@ -51,6 +60,11 @@ if __name__ == '__main__':
         if opts.model == Model.decision_tree:
             model = DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval,
                                            None, opts.gini)
+        elif opts.model == Model.bagging:
+            trees = [DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval,
+                                            None, opts.gini) for _ in
+                     range(opts.num_decision_trees)]
+            model = Bagging(trees, opts.k)
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 
@@ -63,6 +77,8 @@ if __name__ == '__main__':
     elif opts.action[0] == "test":
         if opts.model == Model.decision_tree:
             model = DecisionTreeClassifier.load(opts.action[1])
+        elif opts.model == Model.bagging:
+            model = Bagging.load(opts.action[1])
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 

@@ -1,4 +1,5 @@
 import json
+import os.path
 import random
 import pandas as pd
 import numpy as np
@@ -29,12 +30,13 @@ class Bagging(Algo):
 
     def save(self, dest):
         obj = {
-            "type": Model.bagging,
-            "algos": self.algos,
+            "type": Model.bagging.value,
             "k": self.k
         }
-        with open(dest, "w") as f:
+        with open(os.path.join(dest, "bag.json"), "w") as f:
             json.dump(obj, f, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+        for i, algo in enumerate(self.algos):
+            algo.save(os.path.join(dest, str(i) + ".json"))
 
     @staticmethod
     def load(src):
@@ -54,7 +56,7 @@ class Bagging(Algo):
     def fit(self, X, Y):
         dataset = np.insert(X, -1, Y, axis=1)
         for algo in self.algos:
-            bootstrap_sample = pd.Dataframe([random.choice(dataset) for _ in range(self.k)])
+            bootstrap_sample = pd.DataFrame([random.choice(dataset) for _ in range(self.k)])
             x, y = bootstrap_sample.iloc[:, :-1].values, bootstrap_sample.iloc[:, -1] \
                 .values.reshape(-1, 1)
             algo.fit(x, y)

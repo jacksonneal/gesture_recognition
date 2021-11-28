@@ -129,7 +129,7 @@ class DecisionTreeClassifier(Algo):
 
     def save(self, dest):
         obj = {
-            "type": Model.decision_tree,
+            "type": Model.decision_tree.value,
             "root": self.root,
             "min_samples_split": self.min_samples_split,
             "max_depth": self.max_depth,
@@ -224,7 +224,7 @@ class DecisionTreeClassifier(Algo):
             parallel.
         :param dataset: input data
         :param num_samples: num samples in dataset
-        :param num_features: num features per sample_prob
+        :param num_features: num features per sample_problem
         :return: best split
         """
         split_params = []

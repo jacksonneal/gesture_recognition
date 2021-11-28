@@ -1,7 +1,9 @@
 import numpy as np
-import pandas as pd
+import json
 
+import pandas as pd
 from sklearn.metrics import accuracy_score
+
 from preprocessing.preprocessor import Preprocessor
 
 
@@ -67,7 +69,7 @@ class NaiveBayesClassifier:
         """
         This function should be used to calculate the statistics for each class
         dataset: data for which statistics needs to be computed
-        Returns a dictionary contaning statistics for each class.
+        Returns a dictionary containing statistics for each class.
         NOTE: Use splitup_dataset and calculate_stats in this method and 
         last column contains the class values
         """
@@ -131,10 +133,33 @@ class NaiveBayesClassifier:
             predictions.append(output)
         return predictions
 
+    def save(self, dest):
+        obj = self.model
+        with open(dest, "w") as f:
+            json.dump(obj, f, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-X_train, y_train = Preprocessor.access_data_labels("..\\datasets\\train_test_split\\train.csv")
-classifier = NaiveBayesClassifier()
-classifier.fit(X_train, y_train)
-X_test, y_test = Preprocessor.access_data_labels("..\\datasets\\train_test_split\\test.csv")
-predictions = classifier.predict(X_test)
-print("Accuracy is: " + str(accuracy_score(y_test, predictions)))
+    @staticmethod
+    def load(src):
+        loaded_classifier = NaiveBayesClassifier()
+        loaded_classifier.training_data_len = 0
+        loaded_classifier.model = {}
+
+        with open(src, "r") as f:
+            obj = json.load(f)
+
+        for key in obj:
+            loaded_classifier.model[float(key)] = obj[key]
+            loaded_classifier.training_data_len += obj[key][0][2]
+
+        return loaded_classifier
+
+if __name__ == '__main__':
+    X_train, y_train = Preprocessor.access_data_labels("..\\datasets\\train_test_split\\train.csv")
+    classifier = NaiveBayesClassifier()
+    classifier.fit(X_train, y_train)
+    classifier.save("data.txt")
+
+    classifier = NaiveBayesClassifier.load("data.txt")
+    X_test, y_test = Preprocessor.access_data_labels("..\\datasets\\train_test_split\\test.csv")
+    predictions = classifier.predict(X_test)
+    print("Accuracy is: " + str(accuracy_score(y_test, predictions)))

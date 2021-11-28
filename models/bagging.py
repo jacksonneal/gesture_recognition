@@ -13,16 +13,16 @@ class Bagging(Algo):
     Bagging Ensemble model.
     """
 
-    def __init__(self, algos, k, num_algos=None):
+    def __init__(self, algos, k, num_models=None):
         """
         Construct an Bagging ensemble model with the given models.
         :param algos: underlying models of the ensemble
         :param k: number of entries to sample from dataset using bootstrapping and use to train
-        each model with
+        :param num_models: number of expected models
         """
         self.algos = algos
         self.k = k
-        self.num_models = len(algos) if num_algos is None else num_algos
+        self.num_models = len(algos) if num_models is None else num_models
 
     def print(self):
         print("Bagging:")
@@ -67,9 +67,10 @@ class Bagging(Algo):
             raise ValueError(f"Unsupported model type {dct['type']}.")
 
     def fit(self, X, Y):
-        dataset = np.insert(X, X.shape[1], Y, axis=1)
+        dataset = np.append(X, Y, axis=1)
         for i, algo in enumerate(self.algos):
             bootstrap_sample = pd.DataFrame([random.choice(dataset) for _ in range(self.k)])
+            print(bootstrap_sample)
             x, y = bootstrap_sample.iloc[:, :-1].values, bootstrap_sample.iloc[:, -1] \
                 .values.reshape(-1, 1)
             algo.fit(x, y)

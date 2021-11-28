@@ -70,7 +70,6 @@ class Bagging(Algo):
         dataset = np.append(X, Y, axis=1)
         for i, algo in enumerate(self.algos):
             bootstrap_sample = pd.DataFrame([random.choice(dataset) for _ in range(self.k)])
-            print(bootstrap_sample)
             x, y = bootstrap_sample.iloc[:, :-1].values, bootstrap_sample.iloc[:, -1] \
                 .values.reshape(-1, 1)
             algo.fit(x, y)

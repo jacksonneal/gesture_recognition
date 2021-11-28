@@ -4,7 +4,7 @@ import random
 import pandas as pd
 import numpy as np
 
-from models.decision_tree import DecisionTreeClassifier
+from models.decision_tree import DecisionNode, DecisionTreeClassifier, LeafNode
 from models.model import Algo, Model
 
 
@@ -13,7 +13,7 @@ class Bagging(Algo):
     Bagging Ensemble model.
     """
 
-    def __init__(self, algos, k):
+    def __init__(self, algos, k, num_algos=None):
         """
         Construct an Bagging ensemble model with the given models.
         :param algos: underlying models of the ensemble
@@ -22,6 +22,7 @@ class Bagging(Algo):
         """
         self.algos = algos
         self.k = k
+        self.num_models = len(algos) if num_algos is None else num_algos
 
     def print(self):
         print("Bagging:")
@@ -31,6 +32,7 @@ class Bagging(Algo):
     def save(self, dest):
         obj = {
             "type": Model.bagging.value,
+            "num_models": self.num_models,
             "k": self.k
         }
         with open(os.path.join(dest, "bag.json"), "w") as f:
@@ -40,32 +42,47 @@ class Bagging(Algo):
 
     @staticmethod
     def load(src):
-        with open(src, "r") as f:
-            return json.load(f, object_hook=Bagging.as_payload)
+        with open(os.path.join(src, "bag.json"), "r") as f:
+            bag = json.load(f, object_hook=Bagging.as_payload)
+        for i in range(bag.num_models):
+            with open(os.path.join(src, str(i) + ".json")) as f:
+                model = json.load(f, object_hook=Bagging.as_payload)
+                bag.algos.append(model)
+        return bag
 
     @staticmethod
     def as_payload(dct):
-        if dct["type"] == Model.bagging:
-            return Bagging(dct["algos"], dct["k"])
-        elif dct["type"] == Model.decision_tree:
+        if "value" in dct:
+            return LeafNode(dct["value"])
+        elif "feature_index" in dct:
+            return DecisionNode(dct["feature_index"], dct["threshold"],
+                                dct["left"], dct["right"],
+                                dct["info_gain"])
+        elif dct["type"] == Model.bagging.value:
+            return Bagging([], dct["k"], dct["num_models"])
+        elif dct["type"] == Model.decision_tree.value:
             return DecisionTreeClassifier(dct["min_samples_split"], dct["max_depth"],
                                           dct["max_split_eval"], dct["root"], dct["mode"] == "gini")
         else:
-            raise ValueError("Unsupported model type.")
+            raise ValueError(f"Unsupported model type {dct['type']}.")
 
     def fit(self, X, Y):
-        dataset = np.insert(X, -1, Y, axis=1)
-        for algo in self.algos:
+        dataset = np.insert(X, X.shape[1], Y, axis=1)
+        for i, algo in enumerate(self.algos):
             bootstrap_sample = pd.DataFrame([random.choice(dataset) for _ in range(self.k)])
             x, y = bootstrap_sample.iloc[:, :-1].values, bootstrap_sample.iloc[:, -1] \
                 .values.reshape(-1, 1)
             algo.fit(x, y)
+            print(f"Trained model: {i}")
 
     def predict(self, X):
-        predictions = {}
-        for algo in self.algos:
-            prediction = algo.predict(X)
-            if prediction not in predictions:
-                predictions[prediction] = 0
-            predictions[prediction] += 1
-        return max(predictions, key=predictions.get)
+        ret = []
+        for x in X:
+            predictions = {}
+            for algo in self.algos:
+                prediction = algo.predict([x])[0]
+                if prediction not in predictions:
+                    predictions[prediction] = 0
+                predictions[prediction] += 1
+            ret.append(max(predictions, key=predictions.get))
+        return ret

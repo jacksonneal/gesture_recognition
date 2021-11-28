@@ -45,3 +45,7 @@ All of the build & execution commands are organized in the Makefile.
     - `python -m models decision-tree train .\datasets\sample_problem\train.csv .\serialized\tree.json`
 10) Run DecisionTree Load and Test:
     - `python -m models decision-tree test .\serialized\tree.json .\datasets\sample\test.csv`
+11) Run Bagging Ensemble Train and Save:
+    - `python -m models bagging train .\datasets\sample_problem\train.csv serialized`
+12) Run Bagging Ensemble Load and Test:
+    - `python -m models bagging test serialized .\datasets\sample_problem\test.csv`

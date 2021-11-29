@@ -39,7 +39,7 @@ if __name__ == '__main__':
                              "(train, training csv, destination for trained model)"
                              "(test, model file to load, test csv)")
 
-    # Optional log results argument
+    # Optional log results argument can be used with test action
     parser.add_argument("--save", type=str, default=None,
                         help="Save test results to the given directory.")
 

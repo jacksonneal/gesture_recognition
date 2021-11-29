@@ -35,17 +35,19 @@ All of the build & execution commands are organized in the Makefile.
 5) Install dependencies:
     - `make install`
     - installs dependencies from `requirements.txt` using pip
-6) Join separate gesture datasets (only run once):
+6) Compile with Cython:
+    - `make cython`
+7) Join separate gesture datasets (only run once):
     - `make join-ds src=.\datasets\initial dest=.\datasets\joined\joined.csv`
-7) Generate train and test datasets (only run once):
+8) Generate train and test datasets (only run once):
     - `make train-test-split src=.\datasets\joined\joined.csv dest=.\datasets\train_test_split test_pct=0.20`
-8) Run tests through pytest:
+9) Run tests through pytest:
     - `make test`
-9) Run DecisionTree Train and Save:
+10) Run DecisionTree Train and Save:
     - `python -m models decision-tree train .\datasets\sample_problem\train.csv .\serialized\tree.json`
-10) Run DecisionTree Load and Test:
+11) Run DecisionTree Load and Test:
     - `python -m models decision-tree test .\serialized\tree.json .\datasets\sample\test.csv`
-11) Run Bagging Ensemble Train and Save:
+12) Run Bagging Ensemble Train and Save:
     - `python -m models bagging train .\datasets\sample_problem\train.csv serialized`
-12) Run Bagging Ensemble Load and Test:
+13) Run Bagging Ensemble Load and Test:
     - `python -m models bagging test serialized .\datasets\sample_problem\test.csv`

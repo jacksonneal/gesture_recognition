@@ -4,14 +4,13 @@ import os
 import numpy as np
 import pandas as pd
 
+from models import decision_tree
 from models.bagging import Bagging
 from preprocessing.preprocessor import Preprocessor
 from models.decision_tree import DecisionTreeClassifier
 from enum import Enum
 from models.model import Model
 from sklearn.metrics import accuracy_score, confusion_matrix
-
-MAX_PARALLEL = 20
 
 
 class Action(Enum):
@@ -76,12 +75,12 @@ if __name__ == '__main__':
                              "random forest.")
 
     # Configurable parallelism
-    parser.add_argument("--parallel", type=int, defalt=20,
+    parser.add_argument("--parallel", type=int, default=20,
                         help="Max number of parallel processes to use.")
 
     opts = parser.parse_args()
 
-    MAX_PARALLEL = opts.parallel
+    decision_tree.MAX_PARALLEL = opts.parallel
 
     model = None
     if opts.action[0] == "train":

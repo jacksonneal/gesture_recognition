@@ -62,7 +62,8 @@ class Bagging(Algo):
             return Bagging([], dct["k"], dct["num_models"])
         elif dct["type"] == Model.decision_tree.value:
             return DecisionTreeClassifier(dct["min_samples_split"], dct["max_depth"],
-                                          dct["max_split_eval"], dct["root"], dct["mode"] == "gini")
+                                          dct["max_split_eval"], dct["root"], dct["mode"] == "gini",
+                                          dct["num_valid_features"])
         else:
             raise ValueError(f"Unsupported model type {dct['type']}.")
 

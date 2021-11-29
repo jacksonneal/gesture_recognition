@@ -8,7 +8,7 @@ from multiprocessing import Pool
 from scipy import stats
 from models.model import Algo, Model
 
-MAX_PARALLEL = 40
+MAX_PARALLEL = 20
 
 
 class Node(ABC):
@@ -136,7 +136,8 @@ class DecisionTreeClassifier(Algo):
             "min_samples_split": self.min_samples_split,
             "max_depth": self.max_depth,
             "max_split_eval": self.max_split_eval,
-            "mode": self.mode
+            "mode": self.mode,
+            "num_valid_features": self.num_valid_features
         }
         with open(dest, "w") as f:
             json.dump(obj, f, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -156,10 +157,11 @@ class DecisionTreeClassifier(Algo):
                                 dct["info_gain"])
         else:
             return DecisionTreeClassifier(dct["min_samples_split"], dct["max_depth"],
-                                          dct["max_split_eval"], dct["root"], dct["mode"] == "gini")
+                                          dct["max_split_eval"], dct["root"], dct["mode"] == "gini",
+                                          dct["num_valid_features"])
 
     def __init__(self, min_samples_split=2, max_depth=2, max_split_eval=1000, root=None,
-                 use_gini=False):
+                 use_gini=False, num_valid_features=None):
         """
         Initialize the root of the decision tree to None and initialize the
         stopping conditions.
@@ -167,6 +169,9 @@ class DecisionTreeClassifier(Algo):
         :param max_depth: max vertical depth of decision tree
         :param max_split_eval: max comparisons when determining split vals
         :param root: root node
+        :param use_gini: whether to use gini index instead of entropy
+        :param num_valid_features: if present, limit to number of randomly chosen features
+        available for splitting when training
         """
         self.root = root
         self.min_samples_split = min_samples_split
@@ -174,6 +179,8 @@ class DecisionTreeClassifier(Algo):
         self.max_split_eval = max_split_eval
         self.pool = Pool(min(MAX_PARALLEL, os.cpu_count() - 1))
         self.mode = "gini" if use_gini else "entropy"
+        self.num_valid_features = num_valid_features
+        self.valid_feature_indices = None
 
     def __del__(self):
         """
@@ -202,8 +209,16 @@ class DecisionTreeClassifier(Algo):
         targets = dataset[:, -1]
         features = dataset[:, :-1][0]
 
+        # 1.b establish valid feature indices
+        if self.valid_feature_indices is None:
+            if self.num_valid_features is None:
+                self.valid_feature_indices = range(len(features))
+            else:
+                self.valid_feature_indices = random.sample(range(len(features)),
+                                                           self.num_valid_features)
+
         # 2.
-        best_split = self.get_best_split(dataset, len(dataset), len(features))
+        best_split = self.get_best_split(dataset, len(dataset))
         if len(best_split["dataset_left"]) == 0 or len(best_split["dataset_right"]) == 0:
             best_split = None
 
@@ -218,7 +233,7 @@ class DecisionTreeClassifier(Algo):
         else:
             return LeafNode(DecisionTreeClassifier.calculate_leaf_value(targets))
 
-    def get_best_split(self, dataset, num_samples, num_features):
+    def get_best_split(self, dataset, num_samples):
         """
         Function to find out the best split by looping over each feature. For
             each feature loop over all feature values and calculate best_split
@@ -226,11 +241,10 @@ class DecisionTreeClassifier(Algo):
             parallel.
         :param dataset: input data
         :param num_samples: num samples in dataset
-        :param num_features: num features per sample_problem
         :return: best split
         """
         split_params = []
-        for feature_index in range(num_features):
+        for feature_index in self.valid_feature_indices:
             for sample_index in range(num_samples):
                 split_params.append((feature_index, sample_index))
 

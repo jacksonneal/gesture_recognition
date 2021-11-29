@@ -68,16 +68,21 @@ if __name__ == '__main__':
     parser.add_argument("--n-dt", type=int, default=10, dest="num_decision_trees",
                         help="Number of decision trees in ensemble.")
 
+    # RandomForest Num Features Argument: Number of features to be considered in each tree
+    parser.add_argument("--rf-nf", type=int, default=None, dest="num_valid_features",
+                        help="Number of features to be sampled and considered in each tree of "
+                             "random forest.")
+
     opts = parser.parse_args()
 
     model = None
     if opts.action[0] == "train":
         if opts.model == Model.decision_tree:
             model = DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval,
-                                           None, opts.gini)
+                                           None, opts.gini, opts.num_valid_features)
         elif opts.model == Model.bagging:
             trees = [DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval,
-                                            None, opts.gini) for _ in
+                                            None, opts.gini, opts.num_valid_features) for _ in
                      range(opts.num_decision_trees)]
             model = Bagging(trees, opts.k)
         else:

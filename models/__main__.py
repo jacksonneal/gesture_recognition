@@ -11,6 +11,8 @@ from enum import Enum
 from models.model import Model
 from sklearn.metrics import accuracy_score, confusion_matrix
 
+MAX_PARALLEL = 20
+
 
 class Action(Enum):
     train = "train"
@@ -73,7 +75,13 @@ if __name__ == '__main__':
                         help="Number of features to be sampled and considered in each tree of "
                              "random forest.")
 
+    # Configurable parallelism
+    parser.add_argument("--parallel", type=int, defalt=20,
+                        help="Max number of parallel processes to use.")
+
     opts = parser.parse_args()
+
+    MAX_PARALLEL = opts.parallel
 
     model = None
     if opts.action[0] == "train":

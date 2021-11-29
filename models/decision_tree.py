@@ -3,12 +3,11 @@ import pandas as pd
 import numpy as np
 import json
 import random
+import models
 from abc import ABC, abstractmethod
 from multiprocessing import Pool
 from scipy import stats
 from models.model import Algo, Model
-
-MAX_PARALLEL = 20
 
 
 class Node(ABC):
@@ -177,7 +176,7 @@ class DecisionTreeClassifier(Algo):
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
         self.max_split_eval = max_split_eval
-        self.pool = Pool(min(MAX_PARALLEL, os.cpu_count() - 1))
+        self.pool = Pool(min(models.__main__.MAX_PARALLEL, os.cpu_count() - 1))
         self.mode = "gini" if use_gini else "entropy"
         self.num_valid_features = num_valid_features
         self.valid_feature_indices = None

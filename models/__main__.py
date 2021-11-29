@@ -1,5 +1,8 @@
 import argparse
 
+import numpy as np
+import pandas as pd
+
 from models.bagging import Bagging
 from preprocessing.preprocessor import Preprocessor
 from models.decision_tree import DecisionTreeClassifier
@@ -16,6 +19,13 @@ class Action(Enum):
         return self.value
 
 
+def custom_style(row):
+    color = 'white'
+    if row.values[-1] != row.values[-2]:
+        color = 'red'
+    return ['background-color: %s' % color] * len(row.values)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Act on gesture recognition dataset.")
 
@@ -27,6 +37,10 @@ if __name__ == '__main__':
                         help="Indicate action and relevant files: "
                              "(train, training csv, destination for trained model)"
                              "(test, model file to load, test csv)")
+
+    # Optional log results argument
+    parser.add_argument("--save", type=str, default=None,
+                        help="Save test results [x][y][pred] to file given html file location.")
 
     # Optional print model
     parser.add_argument("--print", action="store_true", help="Debug print.")
@@ -87,6 +101,13 @@ if __name__ == '__main__':
             model.print()
         predictions = model.predict(X_test)
         print("Accuracy is: " + str(accuracy_score(y_test, predictions)))
+        if opts.save is not None:
+            res = np.append(X_test, y_test, axis=1)
+            res = np.insert(res, res.shape[1], predictions, axis=1)
+            res_df = pd.DataFrame(res)
 
+            df_styled = res_df.style.apply(custom_style, axis=1)
+            with open(opts.save, "w") as f:
+                f.write(df_styled.render())
     else:
         raise ValueError(f"Unsupported action type {opts.action}")

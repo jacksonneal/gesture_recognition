@@ -11,6 +11,3 @@ venv/
 
 # Unit tests
 .pytest_cache/
-
-# Serialized models
-serialized/

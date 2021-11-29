@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import numpy as np
 import pandas as pd
@@ -8,7 +9,7 @@ from preprocessing.preprocessor import Preprocessor
 from models.decision_tree import DecisionTreeClassifier
 from enum import Enum
 from models.model import Model
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 
 class Action(Enum):
@@ -40,7 +41,7 @@ if __name__ == '__main__':
 
     # Optional log results argument
     parser.add_argument("--save", type=str, default=None,
-                        help="Save test results [x][y][pred] to file given html file location.")
+                        help="Save test results to the given directory.")
 
     # Optional print model
     parser.add_argument("--print", action="store_true", help="Debug print.")
@@ -102,12 +103,23 @@ if __name__ == '__main__':
         predictions = model.predict(X_test)
         print("Accuracy is: " + str(accuracy_score(y_test, predictions)))
         if opts.save is not None:
+            # Save all results, highlight incorrect predictions
             res = np.append(X_test, y_test, axis=1)
             res = np.insert(res, res.shape[1], predictions, axis=1)
             res_df = pd.DataFrame(res)
 
             df_styled = res_df.style.apply(custom_style, axis=1)
-            with open(opts.save, "w") as f:
+            with open(os.path.join(opts.save, "x_y_pred.html"), "w") as f:
                 f.write(df_styled.render())
+
+            # Save confusion matrix
+            cm = confusion_matrix(y_test, predictions)
+            cm_df = pd.DataFrame(cm)
+            cm_df.to_csv(os.path.join(opts.save, "cm.csv"))
+
+            # Save arguments and accuracy of test run
+            with open(os.path.join(opts.save, "log.txt"), "w") as f:
+                f.write("Args:" + str(opts) + "\n")
+                f.write("Accuracy: " + str(accuracy_score(y_test, predictions)))
     else:
         raise ValueError(f"Unsupported action type {opts.action}")

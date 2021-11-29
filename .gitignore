@@ -18,3 +18,5 @@ venv/
 *.lib
 *.exp
 *.obj
+*.so
+build/

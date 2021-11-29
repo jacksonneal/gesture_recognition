@@ -7,7 +7,7 @@ import numpy as np
 import json
 import random
 from abc import ABC, abstractmethod
-from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor
 from scipy import stats
 from models.model import Algo, Model
 
@@ -180,7 +180,7 @@ class DecisionTreeClassifier(Algo):
         self.min_samples_split = min_samples_split
         self.max_depth = max_depth
         self.max_split_eval = max_split_eval
-        self.pool = Pool(min(MAX_PARALLEL, os.cpu_count() - 1))
+        self.pool = ThreadPoolExecutor(max_workers=min(MAX_PARALLEL, os.cpu_count() - 1))
         self.mode = "gini" if use_gini else "entropy"
         self.num_valid_features = num_valid_features
         self.valid_feature_indices = None
@@ -190,8 +190,7 @@ class DecisionTreeClassifier(Algo):
         Destructor close thread pool.
         :return: None
         """
-        self.pool.close()
-        self.pool.join()
+        self.pool.shutdown()
 
     def build_tree(self, dataset, cur_depth=0):
         """

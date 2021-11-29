@@ -59,7 +59,7 @@ class DecisionNode(Node):
         self.info_gain = info_gain
 
     def debug_print(self, indent=" "):
-        print(f'FI: {self.feature_index}, Theta: {self.threshold}, IG: {self.info_gain}')
+        print(f"FI: {self.feature_index}, Theta: {self.threshold}, IG: {self.info_gain}")
         print("%sleft:" % indent, end=" ")
         self.left.debug_print(indent + indent)
         print("%sright:" % indent, end=" ")

@@ -4,10 +4,11 @@ import os
 import numpy as np
 import pandas as pd
 
-from models import decision_tree
+import decision_tree
 from models.bagging import Bagging
 from preprocessing.preprocessor import Preprocessor
-from models.decision_tree import DecisionTreeClassifier
+from decision_tree import DecisionTreeClassifier
+# from models.decision_tree import DecisionTreeClassifier
 from enum import Enum
 from models.model import Model
 from sklearn.metrics import accuracy_score, confusion_matrix
@@ -99,7 +100,7 @@ if __name__ == '__main__':
         model.fit(X_train, y_train)
         model.save(opts.action[2])
         if opts.print:
-            model.print()
+            model.debug_print()
 
     elif opts.action[0] == "test":
         if opts.model == Model.decision_tree:

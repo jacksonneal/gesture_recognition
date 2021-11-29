@@ -4,7 +4,8 @@ import random
 import pandas as pd
 import numpy as np
 
-from models.decision_tree import DecisionNode, DecisionTreeClassifier, LeafNode
+from decision_tree import DecisionNode, DecisionTreeClassifier, LeafNode
+# from models.decision_tree import DecisionNode, DecisionTreeClassifier, LeafNode
 from models.model import Algo, Model
 
 
@@ -24,7 +25,7 @@ class Bagging(Algo):
         self.k = k
         self.num_models = len(algos) if num_models is None else num_models
 
-    def print(self):
+    def debug_print(self):
         print("Bagging:")
         for algo in self.algos:
             algo.print()

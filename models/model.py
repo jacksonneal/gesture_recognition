@@ -13,7 +13,7 @@ class Model(Enum):
 class Algo(ABC):
 
     @abstractmethod
-    def print(self):
+    def debug_print(self):
         """
         Print for debug.
         :return: None

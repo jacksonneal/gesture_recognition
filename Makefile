@@ -32,3 +32,8 @@ lint:
 # Run Model
 model:
 	python -m models $(ARGS)
+
+# Compile with cython
+cython:
+	python setup.py build_ext --inplace
+

@@ -1,3 +1,5 @@
+#cython: language_level=3
+
 import os
 import pandas as pd
 import numpy as np
@@ -17,7 +19,7 @@ class Node(ABC):
     """
 
     @abstractmethod
-    def print(self, indent=" "):
+    def debug_print(self, indent=" "):
         """
         Print node and children if any.
         :return: None
@@ -55,12 +57,12 @@ class DecisionNode(Node):
         self.right = right
         self.info_gain = info_gain
 
-    def print(self, indent=" "):
+    def debug_print(self, indent=" "):
         print(f'FI: {self.feature_index}, Theta: {self.threshold}, IG: {self.info_gain}')
         print("%sleft:" % indent, end=" ")
-        self.left.print(indent + indent)
+        self.left.debug_print(indent + indent)
         print("%sright:" % indent, end=" ")
-        self.right.print(indent + indent)
+        self.right.debug_print(indent + indent)
 
     def make_prediction(self, x):
         if x[self.feature_index] <= self.threshold:
@@ -81,7 +83,7 @@ class LeafNode(Node):
         """
         self.value = value
 
-    def print(self, indent=" "):
+    def debug_print(self, indent=" "):
         print(self.value)
 
     def make_prediction(self, x):
@@ -126,8 +128,8 @@ class DecisionTreeClassifier(Algo):
     Binary Decision Tree.
     """
 
-    def print(self):
-        self.root.print()
+    def debug_print(self):
+        self.root.debug_print()
 
     def save(self, dest):
         obj = {

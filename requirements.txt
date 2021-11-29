@@ -30,3 +30,6 @@ threadpoolctl==3.0.0
 toml==0.10.2
 typing-extensions==3.10.0.2
 wrapt==1.13.3
+
+setuptools~=57.0.0
+Cython~=0.29.24

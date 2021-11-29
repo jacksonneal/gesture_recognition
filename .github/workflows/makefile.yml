@@ -12,13 +12,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-      
-    - name: Install dependencies
-      run: make install
+      - uses: actions/checkout@v2
 
-    - name: Lint
-      run: make lint
-      
-    - name: Run tests
-      run: make test
+      - name: Install dependencies
+        run: make install
+
+      - name: Cython
+        run: make cython
+
+      - name: Lint
+        run: make lint
+
+      - name: Run tests
+        run: make test

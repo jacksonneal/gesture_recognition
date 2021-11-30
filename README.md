@@ -43,11 +43,17 @@ All of the build & execution commands are organized in the Makefile.
     - `make train-test-split src=.\datasets\joined\joined.csv dest=.\datasets\train_test_split test_pct=0.20`
 9) Run tests through pytest:
     - `make test`
-10) Run DecisionTree Train and Save:
-    - `python -m models decision-tree train .\datasets\sample_problem\train.csv .\serialized\tree.json`
-11) Run DecisionTree Load and Test:
-    - `python -m models decision-tree test .\serialized\tree.json .\datasets\sample\test.csv`
-12) Run Bagging Ensemble Train and Save:
-    - `python -m models bagging train .\datasets\sample_problem\train.csv serialized`
-13) Run Bagging Ensemble Load and Test:
-    - `python -m models bagging test serialized .\datasets\sample_problem\test.csv`
+10) View all run options and parameters:
+    - `python -m models -h`
+11) Run DecisionTree Train and Save:
+    - `python -m models decision-tree train .\datasets\sample_problem\train.csv .\serialized\dt\tree.json`
+12) Run DecisionTree Load and Test:
+    - `python -m models decision-tree test .\serialized\dt\tree.json .\datasets\sample\test.csv`
+13) Run Naive Bayes Classifier Train and Save:
+    - `python -m models bayes train .\datasets\sample_problem\train.csv .\serialized\bayes\bayes.json`
+14) Run Naive Bayes Classifier Load and Test:
+    - `python -m models bayes test .\serialized\bayes\bayes.json .\datasets\sample_problem\test.csv`
+15) Run Ensemble Train and Save:
+    - `python -m models ensemble train .\datasets\sample_problem\train.csv .\serialized\ensemble\`
+16) Run Ensemble Load and Test:
+    - `python -m models ensemble test .\serialized\ensemble\ .\datasets\sample_problem\test.csv`

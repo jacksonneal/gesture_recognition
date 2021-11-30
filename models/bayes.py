@@ -1,13 +1,23 @@
+import random
+
 import numpy as np
 import json
 
 import pandas as pd
 from sklearn.metrics import accuracy_score
 
+from models.model import Algo
 from preprocessing.preprocessor import Preprocessor
 
 
-class NaiveBayesClassifier:
+class NaiveBayesClassifier(Algo):
+
+    def __init__(self, num_valid_features=None):
+        self.num_valid_features = num_valid_features
+
+    def debug_print(self):
+        pass
+
     @staticmethod
     def compute_mean(nums):
         """
@@ -46,7 +56,7 @@ class NaiveBayesClassifier:
 
         return split_data
 
-    def calculate_stats(self, dataset):
+    def calculate_stats(self, dataset, valid_columns):
         """
         This function will calculate statistics i.e. mean, standard deviation
         and number of records for each column in the given data
@@ -58,11 +68,12 @@ class NaiveBayesClassifier:
         dataset = np.array(dataset)
         stats = list()
         count = np.shape(dataset)[0]
-        for column_index in range(len(dataset[0])):
+
+        for column_index in valid_columns:
             column_data = dataset[:, column_index]
             mean = self.compute_mean(column_data)
             std_dev = self.compute_standard_deviation(column_data)
-            stats.append((mean, std_dev, count))
+            stats.append((column_index, mean, std_dev, count))
         return stats
 
     def calculate_stats_by_class(self, dataset):
@@ -75,9 +86,16 @@ class NaiveBayesClassifier:
         """
         self.model = {}
         self.training_data_len = len(dataset)
-        split_data = self.splitup_dataset(dataset, 64)
+
+        self.valid_columns = range(len(dataset[0]) - 1)
+        # Ensemble chooses from limited number of features
+        if self.num_valid_features is not None:
+            self.valid_columns = random.sample(self.valid_columns, self.num_valid_features)
+
+        split_data = self.splitup_dataset(dataset, len(dataset[0]) - 1)
         for class_value in split_data:
-            self.model[class_value] = self.calculate_stats(split_data[class_value])
+            self.model[class_value] = self.calculate_stats(split_data[class_value],
+                                                           self.valid_columns)
 
     @staticmethod
     def probability(x, mean, std_dev):
@@ -100,8 +118,8 @@ class NaiveBayesClassifier:
         """
         probability = self.model[class_value][0][2] / self.training_data_len
         for i in range(len(self.model[class_value])):
-            mean, std_dev, count = self.model[class_value][i]
-            probability *= self.probability(record[i], mean, std_dev)
+            col, mean, std_dev, count = self.model[class_value][i]
+            probability *= self.probability(record[col], mean, std_dev)
 
         return probability
 
@@ -152,6 +170,7 @@ class NaiveBayesClassifier:
             loaded_classifier.training_data_len += obj[key][0][2]
 
         return loaded_classifier
+
 
 if __name__ == '__main__':
     X_train, y_train = Preprocessor.access_data_labels("..\\datasets\\train_test_split\\train.csv")

@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 class Model(Enum):
     decision_tree = "decision-tree"
+    bayes = "bayes"
     bagging = "bagging"
 
     def __str__(self):

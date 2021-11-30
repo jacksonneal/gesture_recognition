@@ -81,9 +81,8 @@ if __name__ == '__main__':
                              "ensemble.")
 
     # Ensemble Argument: boost by testing against the given test dataset
-    parser.add_argument("--boost", type=str, default=None, dest="boost_test",
-                        help="Indicate that we should do boosting instead of bagging and "
-                             "indicate test dataset")
+    parser.add_argument("--boost", action="store_true",
+                        help="Indicate that we should do boosting.")
 
     # Configurable parallelism
     parser.add_argument("--parallel", type=int, default=20,
@@ -114,7 +113,7 @@ if __name__ == '__main__':
             algos += bayes
             algos += trees
 
-            model = Ensemble(algos, opts.k, opts.boost_test)
+            model = Ensemble(algos, opts.k, opts.boost)
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 

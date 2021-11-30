@@ -17,7 +17,7 @@ class Ensemble(Algo):
     Bagging Ensemble model.
     """
 
-    def __init__(self, algos, k, num_models=None, boosting=None):
+    def __init__(self, algos, k, num_models=None, boosting=False):
         """
         Construct an Bagging ensemble model with the given models.
         :param algos: underlying models of the ensemble
@@ -93,6 +93,15 @@ class Ensemble(Algo):
             x, y = bootstrap_sample.iloc[:, :-1].values, bootstrap_sample.iloc[:, -1] \
                 .values.reshape(-1, 1)
             algo.fit(x, y)
+            if self.boosting:
+                failed = []
+                for row in dataset:
+                    x, y = row.iloc[:, :-1], row.iloc[:, -1]
+                    if algo.predict(x) != y:
+                        failed.append(row)
+                for row in failed:
+                    dataset.append(row)
+
             print(f"Trained model: {i}")
 
     def predict(self, X):

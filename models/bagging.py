@@ -8,6 +8,8 @@ from decision_tree import DecisionNode, DecisionTreeClassifier, LeafNode
 # from models.decision_tree import DecisionNode, DecisionTreeClassifier, LeafNode
 from models.model import Algo, Model
 
+MODEL_OFFSET = 0  # Naming offset for training bagging in parts
+
 
 class Bagging(Algo):
     """
@@ -39,7 +41,7 @@ class Bagging(Algo):
         with open(os.path.join(dest, "bag.json"), "w") as f:
             json.dump(obj, f, default=lambda o: o.__dict__, sort_keys=True, indent=4)
         for i, algo in enumerate(self.algos):
-            algo.save(os.path.join(dest, str(i) + ".json"))
+            algo.save(os.path.join(dest, str(i + MODEL_OFFSET) + ".json"))
 
     @staticmethod
     def load(src):

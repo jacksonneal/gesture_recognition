@@ -1,5 +1,5 @@
 {
-    "k": 9000,
-    "num_models": 100,
+    "k": 9342,
+    "num_models": 200,
     "type": "bagging"
 }

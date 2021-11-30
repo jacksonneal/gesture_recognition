@@ -6,17 +6,18 @@ import numpy as np
 
 from decision_tree import DecisionNode, DecisionTreeClassifier, LeafNode
 # from models.decision_tree import DecisionNode, DecisionTreeClassifier, LeafNode
+from models.bayes import NaiveBayesClassifier
 from models.model import Algo, Model
 
-MODEL_OFFSET = 0  # Naming offset for training bagging in parts
+MODEL_OFFSET = 0  # Naming offset for training ensemble in parts
 
 
-class Bagging(Algo):
+class Ensemble(Algo):
     """
     Bagging Ensemble model.
     """
 
-    def __init__(self, algos, k, num_models=None):
+    def __init__(self, algos, k, num_models=None, boosting=None):
         """
         Construct an Bagging ensemble model with the given models.
         :param algos: underlying models of the ensemble
@@ -26,6 +27,7 @@ class Bagging(Algo):
         self.algos = algos
         self.k = k
         self.num_models = len(algos) if num_models is None else num_models
+        self.boosting = boosting
 
     def debug_print(self):
         print("Bagging:")
@@ -34,7 +36,7 @@ class Bagging(Algo):
 
     def save(self, dest):
         obj = {
-            "type": Model.bagging.value,
+            "type": Model.ensemble.value,
             "num_models": self.num_models,
             "k": self.k
         }
@@ -46,11 +48,12 @@ class Bagging(Algo):
     @staticmethod
     def load(src):
         with open(os.path.join(src, "bag.json"), "r") as f:
-            bag = json.load(f, object_hook=Bagging.as_payload)
+            bag = json.load(f, object_hook=Ensemble.as_payload)
         for i in range(bag.num_models):
             with open(os.path.join(src, str(i) + ".json")) as f:
-                model = json.load(f, object_hook=Bagging.as_payload)
+                model = json.load(f, object_hook=Ensemble.as_payload)
                 bag.algos.append(model)
+            print(f"Loaded model: {i}")
         return bag
 
     @staticmethod
@@ -61,12 +64,25 @@ class Bagging(Algo):
             return DecisionNode(dct["feature_index"], dct["threshold"],
                                 dct["left"], dct["right"],
                                 dct["info_gain"])
-        elif dct["type"] == Model.bagging.value:
-            return Bagging([], dct["k"], dct["num_models"])
+        elif dct["type"] == Model.ensemble.value:
+            return Ensemble([], dct["k"], dct["num_models"])
         elif dct["type"] == Model.decision_tree.value:
             return DecisionTreeClassifier(dct["min_samples_split"], dct["max_depth"],
                                           dct["max_split_eval"], dct["root"], dct["mode"] == "gini",
                                           dct["num_valid_features"])
+        elif dct["type"] == Model.bayes.value:
+            # We just assume we have a bayes
+            loaded_classifier = NaiveBayesClassifier()
+            loaded_classifier.training_data_len = 0
+            loaded_classifier.model = {}
+
+            for key in dct:
+                if key == "type":
+                    continue
+                loaded_classifier.model[float(key)] = dct[key]
+                loaded_classifier.training_data_len += dct[key][0][2]
+
+            return loaded_classifier
         else:
             raise ValueError(f"Unsupported model type {dct['type']}.")
 

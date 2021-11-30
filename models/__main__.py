@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 import decision_tree
-from models.bagging import Bagging
+from models.ensemble import Ensemble
 from models.bayes import NaiveBayesClassifier
 from preprocessing.preprocessor import Preprocessor
 from decision_tree import DecisionTreeClassifier
@@ -82,8 +82,8 @@ if __name__ == '__main__':
 
     # Ensemble Argument: boost by testing against the given test dataset
     parser.add_argument("--boost", type=str, default=None, dest="boost_test",
-                        help="Indicate that we should do boosting instead of bagging and indicate "
-                             "test dataset")
+                        help="Indicate that we should do boosting instead of bagging and "
+                             "indicate test dataset")
 
     # Configurable parallelism
     parser.add_argument("--parallel", type=int, default=20,
@@ -102,14 +102,15 @@ if __name__ == '__main__':
         elif opts.model == Model.bayes:
             model = NaiveBayesClassifier()
 
-        elif opts.model == Model.bagging:
+        elif opts.model == Model.ensemble:
             bayes = [NaiveBayesClassifier(opts.num_valid_features) for _ in
                      range(opts.num_decision_trees)]
 
             trees = [DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval,
                                             None, opts.gini, opts.num_valid_features) for _ in
                      range(opts.num_decision_trees)]
-            model = Bagging(trees, opts.k)
+
+            model = Ensemble(trees, opts.k, opts.boost_test)
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 
@@ -124,8 +125,8 @@ if __name__ == '__main__':
             model = DecisionTreeClassifier.load(opts.action[1])
         elif opts.model == Model.bayes:
             model = NaiveBayesClassifier.load(opts.action[1])
-        elif opts.model == Model.bagging:
-            model = Bagging.load(opts.action[1])
+        elif opts.model == Model.ensemble:
+            model = Ensemble.load(opts.action[1])
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 

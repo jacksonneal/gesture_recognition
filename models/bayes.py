@@ -6,7 +6,7 @@ import json
 import pandas as pd
 from sklearn.metrics import accuracy_score
 
-from models.model import Algo
+from models.model import Algo, Model
 from preprocessing.preprocessor import Preprocessor
 
 
@@ -153,6 +153,7 @@ class NaiveBayesClassifier(Algo):
 
     def save(self, dest):
         obj = self.model
+        obj["type"] = Model.bayes.value
         with open(dest, "w") as f:
             json.dump(obj, f, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
@@ -166,6 +167,8 @@ class NaiveBayesClassifier(Algo):
             obj = json.load(f)
 
         for key in obj:
+            if key == "type":
+                continue
             loaded_classifier.model[float(key)] = obj[key]
             loaded_classifier.training_data_len += obj[key][0][2]
 

@@ -104,13 +104,17 @@ if __name__ == '__main__':
 
         elif opts.model == Model.ensemble:
             bayes = [NaiveBayesClassifier(opts.num_valid_features) for _ in
-                     range(opts.num_decision_trees)]
+                     range(opts.num_naive_bayes)]
 
             trees = [DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval,
                                             None, opts.gini, opts.num_valid_features) for _ in
                      range(opts.num_decision_trees)]
 
-            model = Ensemble(trees, opts.k, opts.boost_test)
+            algos = []
+            algos += bayes
+            algos += trees
+
+            model = Ensemble(algos, opts.k, opts.boost_test)
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 

@@ -155,7 +155,7 @@ class NaiveBayesClassifier(Algo):
         obj = self.model
         obj["type"] = Model.bayes.value
         with open(dest, "w") as f:
-            json.dump(obj, f, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+            json.dump(obj, f, default=lambda o: o.__dict__, sort_keys=False, indent=4)
 
     @staticmethod
     def load(src):

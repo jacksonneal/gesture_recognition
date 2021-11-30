@@ -10,6 +10,7 @@ from models.bayes import NaiveBayesClassifier
 from models.model import Algo, Model
 
 MODEL_OFFSET = 0  # Naming offset for training ensemble in parts
+MAX_BOOST = 100  # maximum number of samples to boost
 
 
 class Ensemble(Algo):
@@ -17,11 +18,12 @@ class Ensemble(Algo):
     Bagging Ensemble model.
     """
 
-    def __init__(self, algos, k, num_models=None, boosting=False):
+    def __init__(self, algos, k, boosting=False, num_models=None):
         """
         Construct an Bagging ensemble model with the given models.
         :param algos: underlying models of the ensemble
         :param k: number of entries to sample from dataset using bootstrapping and use to train
+        :param boosting: whether to use boosting in training
         :param num_models: number of expected models
         """
         self.algos = algos
@@ -37,6 +39,7 @@ class Ensemble(Algo):
     def save(self, dest):
         obj = {
             "type": Model.ensemble.value,
+            "boosting": self.boosting,
             "num_models": self.num_models,
             "k": self.k
         }
@@ -53,7 +56,7 @@ class Ensemble(Algo):
             with open(os.path.join(src, str(i) + ".json")) as f:
                 model = json.load(f, object_hook=Ensemble.as_payload)
                 bag.algos.append(model)
-            print(f"Loaded model: {i}")
+            # print(f"Loaded model: {i}")
         return bag
 
     @staticmethod
@@ -65,7 +68,7 @@ class Ensemble(Algo):
                                 dct["left"], dct["right"],
                                 dct["info_gain"])
         elif dct["type"] == Model.ensemble.value:
-            return Ensemble([], dct["k"], dct["num_models"])
+            return Ensemble([], dct["k"], dct["boosting"], dct["num_models"])
         elif dct["type"] == Model.decision_tree.value:
             return DecisionTreeClassifier(dct["min_samples_split"], dct["max_depth"],
                                           dct["max_split_eval"], dct["root"], dct["mode"] == "gini",
@@ -96,11 +99,13 @@ class Ensemble(Algo):
             if self.boosting:
                 failed = []
                 for row in dataset:
-                    x, y = row.iloc[:, :-1], row.iloc[:, -1]
-                    if algo.predict(x) != y:
+                    x, y = row[:-1], row[-1]
+                    if algo.predict([x])[0] != y:
                         failed.append(row)
+                if len(failed) > MAX_BOOST:
+                    failed = random.sample(failed, MAX_BOOST)
                 for row in failed:
-                    dataset.append(row)
+                    dataset = np.vstack([dataset, row])
 
             print(f"Trained model: {i}")
 

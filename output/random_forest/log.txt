@@ -1,2 +1,0 @@
-Args:Namespace(action=['test', 'serialized/bagging/', 'datasets/train_test_split/test.csv'], gini=False, k=1000, max_depth=3, max_split_eval=1000, min_split=2, model=<Model.bagging: 'bagging'>, num_decision_trees=10, num_valid_features=None, parallel=20, print=False, save='output/bagging/')
-Accuracy: 0.9113869863013698

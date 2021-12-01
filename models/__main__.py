@@ -110,8 +110,12 @@ if __name__ == '__main__':
                      range(opts.num_decision_trees)]
 
             algos = []
-            algos += bayes
-            algos += trees
+            for i in range(len(bayes)):
+                algos.append(bayes[i])
+                if i < len(trees):
+                    algos.append(trees[i])
+            for i in range(len(bayes), len(trees)):
+                algos.append(trees[i])
 
             model = Ensemble(algos, opts.k, opts.boost)
         else:

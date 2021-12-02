@@ -40,11 +40,11 @@ cython:
 ensemble-train-test: ensemble-train ensemble-test
 
 ensemble-train:
-	 python -m models ensemble train .\datasets\train_test_split\train.csv .\serialized\ensemble\ \
+	 python -m models ensemble train .\datasets\train_test_split\train.csv .\serialized\ensemble2\ \
  		--k 9342 --n-dt 100 --n-nb 100 --boost --nf 40 --max-split-eval 10 \
  		--max-depth 25 --min-split 10 --gini
 
 ensemble-test:
 	python -m models ensemble test \
- 		.\serialized\ensemble\ .\datasets\train_test_split\test.csv --save .\output\ensemble\
+ 		.\serialized\ensemble2\ .\datasets\train_test_split\test.csv --save .\output\ensemble2\
 

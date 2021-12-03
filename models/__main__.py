@@ -3,6 +3,8 @@ import os
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
+import seaborn as sns
 
 import decision_tree
 from models.ensemble import Ensemble
@@ -162,5 +164,15 @@ if __name__ == '__main__':
             with open(os.path.join(opts.save, "log.txt"), "w") as f:
                 f.write("Args:" + str(opts) + "\n")
                 f.write("Accuracy: " + str(accuracy_score(y_test, predictions)))
+
+            # Plot CM
+            f, ax = plt.subplots(figsize=(15, 15))
+            sns.set(font_scale=1.4)
+            sns.heatmap(cm, annot=True, linewidths=0.01, cmap="Purples", linecolor="green",
+                        ax=ax)
+            plt.xlabel("Predicted Label")
+            plt.ylabel("True Label")
+            plt.title("Confusion Matrix Validation set")
+            plt.show()
     else:
         raise ValueError(f"Unsupported action type {opts.action}")

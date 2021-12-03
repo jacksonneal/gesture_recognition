@@ -1,10 +1,12 @@
 import argparse
 import os
+from random import randrange
 
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
+from sklearn.model_selection import cross_val_score
 
 import decision_tree
 from models.ensemble import Ensemble
@@ -15,6 +17,8 @@ from decision_tree import DecisionTreeClassifier
 from enum import Enum
 from models.model import Model
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+NUM_FOLDS = 5
 
 
 class Action(Enum):
@@ -30,6 +34,19 @@ def custom_style(row):
     if row.values[-1] != row.values[-2]:
         color = 'red'
     return ['background-color: %s' % color] * len(row.values)
+
+
+def cross_validation_split(ds, n_folds):
+    dataset_split = list()
+    dataset_copy = ds.values.tolist()
+    fold_size = int(len(ds) / n_folds)
+    for _ in range(n_folds):
+        cur_fold = list()
+        while len(cur_fold) < fold_size:
+            index = randrange(len(dataset_copy))
+            cur_fold.append(dataset_copy.pop(index))
+        dataset_split.append(cur_fold)
+    return dataset_split
 
 
 if __name__ == '__main__':
@@ -90,6 +107,11 @@ if __name__ == '__main__':
     parser.add_argument("--parallel", type=int, default=20,
                         help="Max number of parallel processes to use.")
 
+    # Configure cross validation when testing
+    parser.add_argument("--cv", action="store_true", dest="cross_validate",
+                        help="Indicate to perform K-Fold Cross Validation in addition to test "
+                             "action.")
+
     opts = parser.parse_args()
 
     decision_tree.MAX_PARALLEL = opts.parallel
@@ -139,6 +161,28 @@ if __name__ == '__main__':
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 
+        if opts.cross_validate:
+            # cross_val_score(model, X, y, cv=NUM_FOLDS)
+            dataset = pd.read_csv(opts.action[2], header=None)
+            folds = cross_validation_split(dataset, NUM_FOLDS)
+            scores = []
+            for fold in folds:
+                train_set = list(folds)
+                train_set.remove(fold)
+                train_set = sum(train_set, [])
+                test_set = list()
+                for record in fold:
+                    record_copy = list(record)
+                    test_set.append(record_copy)
+                    record_copy[-1] = None
+                test_x = [record[:-1] for record in fold]
+                test_y = [record[-1] for record in fold]
+                predicted = model.predict(test_x)
+                accuracy = accuracy_score(test_y, predicted)
+                scores.append(accuracy)
+            print(f"{NUM_FOLDS}-Fold Cross Validation: {scores}")
+            print(f"Average Score: {sum(scores) / len(scores)}")
+
         X_test, y_test = Preprocessor.access_data_labels(opts.action[2])
         if opts.print:
             model.print()
@@ -168,7 +212,7 @@ if __name__ == '__main__':
             # Plot CM
             f, ax = plt.subplots(figsize=(15, 15))
             sns.set(font_scale=1.4)
-            sns.heatmap(cm, annot=True, linewidths=0.01, cmap="Purples", linecolor="green",
+            sns.heatmap(cm, annot=True, linewidths=0.01, cmap="Purples", linecolor="black",
                         ax=ax)
             plt.xlabel("Predicted Label")
             plt.ylabel("True Label")

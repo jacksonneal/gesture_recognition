@@ -208,6 +208,7 @@ class DecisionTreeClassifier(Algo):
           3. If stopping conditions are not met then recursively form the left
           and right subtree if info_gain is positive else return leaf value
         """
+        print(f"cur_depth: {cur_depth}, num_samples: {dataset.shape[0]})")
 
         # 1.
         # targets = dataset.iloc[:, -1]
@@ -251,8 +252,6 @@ class DecisionTreeClassifier(Algo):
         for feature_index in self.valid_feature_indices:
             dataset = dataset.sort_values(by=dataset.columns[feature_index])
             means = self.moving_avg(dataset.iloc[:, feature_index].unique(), 5)
-            print(len(means))
-            exit(1)
             for val in means:
                 split_params.append((feature_index, val))
 
@@ -372,4 +371,4 @@ class DecisionTreeClassifier(Algo):
         :param X: Matrix of features
         :return: Predictions using the make_prediction function
         """
-        return [self.root.make_prediction(x) for x in X]
+        return [self.root.make_prediction(x) for _, x in X.iterrows()]

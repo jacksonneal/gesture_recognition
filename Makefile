@@ -43,6 +43,9 @@ model:
 cython:
 	python setup.py build_ext --inplace
 
+help:
+	python -m models -h
+
 bayes-train-test: bayes-train bayes-test
 
 bayes-train:
@@ -55,12 +58,12 @@ bayes-test:
 dt-train-test: dt-train dt-test
 
 dt-train:
-	python -m models decision-tree train .\datasets\train_test_split\train.csv .\serialized\dt\dt.json \
-		--min-split 10 --max-depth 10 --max-split-eval 1000000 --gini
+	python -m models decision-tree train $(train) $(test) .\serialized\dt\dt.json \
+		--min-split 10 --max-depth 2 --max-split-eval 1000 --gini
 
 dt-test:
-	python -m models decision-tree test \
- 		.\serialized\dt\dt.json .\datasets\train_test_split\test.csv --save .\output\dt\ --cv
+	python -m models decision-tree test $(train) $(test) .\serialized\dt\dt.json \
+ 		--save .\output\dt\ --cv
 
 ensemble-train-test: ensemble-train ensemble-test
 

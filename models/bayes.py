@@ -142,12 +142,13 @@ class NaiveBayesClassifier(Algo):
         return best_option
 
     def fit(self, X, Y):
-        dataset = np.concatenate((X, Y), axis=1)
-        self.calculate_stats_by_class(dataset)
+        X.insert(X.shape[1], "Y", Y)
+        # dataset = np.concatenate((X, Y), axis=1)
+        self.calculate_stats_by_class(X.values)
 
     def predict(self, test):
         predictions = list()
-        for row in test:
+        for row in test.values:
             output = self.make_prediction(row)
             predictions.append(output)
         return predictions

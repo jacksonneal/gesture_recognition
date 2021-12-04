@@ -90,11 +90,14 @@ class Ensemble(Algo):
             raise ValueError(f"Unsupported model type {dct['type']}.")
 
     def fit(self, X, Y):
-        dataset = np.append(X, Y, axis=1)
+        X.insert(X.shape[1], "", Y)
+        dataset = X
+        # dataset = np.append(X, Y, axis=1)
         for i, algo in enumerate(self.algos):
-            bootstrap_sample = pd.DataFrame([random.choice(dataset) for _ in range(self.k)])
-            x, y = bootstrap_sample.iloc[:, :-1].values, bootstrap_sample.iloc[:, -1] \
-                .values.reshape(-1, 1)
+            print(dataset.describe())
+            bootstrap_sample = dataset.sample(self.k,
+                                              replace=True)
+            x, y = bootstrap_sample.iloc[:, :-1], bootstrap_sample.iloc[:, -1]
             algo.fit(x, y)
             if self.boosting:
                 failed = []

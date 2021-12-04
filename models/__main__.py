@@ -7,6 +7,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import StandardScaler
 
 import decision_tree
 from models.ensemble import Ensemble
@@ -56,10 +57,9 @@ if __name__ == '__main__':
     parser.add_argument("model", type=Model, choices=list(Model), help="Model to use.")
 
     # Second positional argument must indicate action on model
-    parser.add_argument("action", type=str, nargs=3,
+    parser.add_argument("action", type=str, nargs=4,
                         help="Indicate action and relevant files: "
-                             "(train, training csv, destination for trained model)"
-                             "(test, model file to load, test csv)")
+                             "({train|test}, train.csv, test.csv, model.json)")
 
     # Optional log results argument can be used with test action
     parser.add_argument("--save", type=str, default=None,
@@ -146,20 +146,26 @@ if __name__ == '__main__':
             raise ValueError(f"Unsupported model type {opts.model}")
 
         X_train, y_train = Preprocessor.access_data_labels(opts.action[1])
+        s = StandardScaler()
+        X_train = pd.DataFrame(s.fit_transform(X_train), columns=X_train.columns)
         model.fit(X_train, y_train)
-        model.save(opts.action[2])
+        model.save(opts.action[3])
         if opts.print:
             model.debug_print()
 
     elif opts.action[0] == "test":
         if opts.model == Model.decision_tree:
-            model = DecisionTreeClassifier.load(opts.action[1])
+            model = DecisionTreeClassifier.load(opts.action[3])
         elif opts.model == Model.bayes:
-            model = NaiveBayesClassifier.load(opts.action[1])
+            model = NaiveBayesClassifier.load(opts.action[3])
         elif opts.model == Model.ensemble:
-            model = Ensemble.load(opts.action[1])
+            model = Ensemble.load(opts.action[3])
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
+
+        s = StandardScaler()
+        X_train, y_train = Preprocessor.access_data_labels(opts.action[1])
+        s.fit_transform(X_train)
 
         if opts.cross_validate:
             # cross_val_score(model, X, y, cv=NUM_FOLDS)
@@ -176,7 +182,8 @@ if __name__ == '__main__':
                     test_set.append(record_copy)
                     record_copy[-1] = None
                 test_x = [record[:-1] for record in fold]
-                test_y = [record[-1] for record in fold]
+                test_x = pd.DataFrame(s.transform(test_x))
+                test_y = pd.DataFrame([record[-1] for record in fold])
                 predicted = model.predict(test_x)
                 accuracy = accuracy_score(test_y, predicted)
                 scores.append(accuracy)
@@ -184,6 +191,8 @@ if __name__ == '__main__':
             print(f"Average Score: {sum(scores) / len(scores)}")
 
         X_test, y_test = Preprocessor.access_data_labels(opts.action[2])
+        X_test = pd.DataFrame(s.fit_transform(X_test), columns=X_test.columns)
+
         if opts.print:
             model.print()
         predictions = model.predict(X_test)
@@ -191,7 +200,7 @@ if __name__ == '__main__':
         print(classification_report(y_test, predictions))
         if opts.save is not None:
             # Save all results, highlight incorrect predictions
-            res = np.append(X_test, y_test, axis=1)
+            res = np.append(X_test.values, y_test.values.reshape(-1, 1), axis=1)
             res = np.insert(res, res.shape[1], predictions, axis=1)
             res_df = pd.DataFrame(res)
 

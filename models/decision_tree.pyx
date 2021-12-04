@@ -10,6 +10,8 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from scipy import stats
 from models.model import Algo, Model
+from collections import Counter
+from sklearn.preprocessing import StandardScaler
 
 MAX_PARALLEL = 20
 
@@ -111,13 +113,13 @@ class SplitEngine:
         :param params: defines split
         :return: split, new datasets, info_gain
         """
-        feature_index, sample_index = params
-        threshold = self.dataset[sample_index][feature_index]
+        feature_index, threshold = params
+        # threshold = self.dataset[sample_index][feature_index]
         dataset_left, dataset_right = DecisionTreeClassifier.split(self.dataset, feature_index,
                                                                    threshold)
-        info_gain = DecisionTreeClassifier.information_gain(self.dataset[:, -1],
-                                                            dataset_left[:, -1],
-                                                            dataset_right[:, -1],
+        info_gain = DecisionTreeClassifier.information_gain(self.dataset.iloc[:, -1],
+                                                            dataset_left.iloc[:, -1],
+                                                            dataset_right.iloc[:, -1],
                                                             self.mode)
         split = {"dataset_right": dataset_right, "dataset_left": dataset_left,
                  "feature_index": feature_index, "threshold": threshold, "info_gain": info_gain}
@@ -206,26 +208,27 @@ class DecisionTreeClassifier(Algo):
           3. If stopping conditions are not met then recursively form the left
           and right subtree if info_gain is positive else return leaf value
         """
+        print(f"cur_depth: {cur_depth}, num_samples: {dataset.shape[0]})")
 
         # 1.
-        targets = dataset[:, -1]
-        features = dataset[:, :-1][0]
+        # targets = dataset.iloc[:, -1]
+        # features = dataset.iloc[:, :-1][0]
 
         # 1.b establish valid feature indices
         if self.valid_feature_indices is None:
             if self.num_valid_features is None:
-                self.valid_feature_indices = range(len(features))
+                self.valid_feature_indices = range(dataset.shape[1])
             else:
-                self.valid_feature_indices = random.sample(range(len(features)),
+                self.valid_feature_indices = random.sample(range(dataset.shape[1]),
                                                            self.num_valid_features)
 
         # 2.
-        best_split = self.get_best_split(dataset, len(dataset))
+        best_split = self.get_best_split(dataset, dataset.shape[0])
         if len(best_split["dataset_left"]) == 0 or len(best_split["dataset_right"]) == 0:
             best_split = None
 
         # 3.a
-        if cur_depth < self.max_depth and len(dataset) > self.min_samples_split \
+        if cur_depth < self.max_depth and dataset.shape[0] > self.min_samples_split \
                 and best_split is not None:
             left = self.build_tree(best_split["dataset_left"], cur_depth + 1)
             right = self.build_tree(best_split["dataset_right"], cur_depth + 1)
@@ -233,7 +236,7 @@ class DecisionTreeClassifier(Algo):
                                 best_split["info_gain"])
         # 3.b
         else:
-            return LeafNode(DecisionTreeClassifier.calculate_leaf_value(targets))
+            return LeafNode(DecisionTreeClassifier.calculate_leaf_value(dataset.iloc[:, -1]))
 
     def get_best_split(self, dataset, num_samples):
         """
@@ -247,16 +250,22 @@ class DecisionTreeClassifier(Algo):
         """
         split_params = []
         for feature_index in self.valid_feature_indices:
-            for sample_index in range(num_samples):
-                split_params.append((feature_index, sample_index))
+            dataset = dataset.sort_values(by=dataset.columns[feature_index])
+            means = self.moving_avg(dataset.iloc[:, feature_index].unique(), 5)
+            for val in means:
+                split_params.append((feature_index, val))
 
-        if len(split_params) > self.max_split_eval * 2:
-            split_params = random.sample(split_params, self.max_split_eval)
+        # if len(split_params) > self.max_split_eval * 2:
+        #     split_params = random.sample(split_params, self.max_split_eval)
 
         split_engine = SplitEngine(dataset, self.mode)
         splits = self.pool.map(split_engine, split_params)
 
         return max(splits, key=lambda x: x["info_gain"])
+
+    @staticmethod
+    def moving_avg(x, window):
+        return np.convolve(x, np.ones(window), 'valid')
 
     @staticmethod
     def split(dataset, feature_index, threshold):
@@ -267,7 +276,8 @@ class DecisionTreeClassifier(Algo):
         :param threshold: threshold to split feature on
         :return: left and right splits of dataset
         """
-        return DecisionTreeClassifier.split_by_cond(dataset, dataset[:, feature_index] <= threshold)
+        return DecisionTreeClassifier.split_by_cond(dataset,
+                                                    dataset.iloc[:, feature_index] <= threshold)
 
     @staticmethod
     def split_by_cond(arr, cond):
@@ -325,13 +335,10 @@ class DecisionTreeClassifier(Algo):
         :param y: target labels
         :return: gini index
         """
-        label_map = {}
-        for label in y:
-            if label not in label_map:
-                label_map[label] = 0
-            label_map[label] += 1
+        counts = Counter(y)
         total = 0
-        for value in label_map.values():
+        length = len(y)
+        for value in counts.values():
             total += (value / len(y)) ** 2
         return 1 - total
 
@@ -353,8 +360,9 @@ class DecisionTreeClassifier(Algo):
         :param Y: Target
         :return: None
         """
-        dataset = np.concatenate((X, Y), axis=1)
-        self.root = self.build_tree(dataset)
+        X.insert(X.shape[1], "Y", Y)
+        # dataset = np.concatenate((X, Y), axis=1)
+        self.root = self.build_tree(X)
 
     def predict(self, X):
         """
@@ -363,4 +371,4 @@ class DecisionTreeClassifier(Algo):
         :param X: Matrix of features
         :return: Predictions using the make_prediction function
         """
-        return [self.root.make_prediction(x) for x in X]
+        return [self.root.make_prediction(x) for _, x in X.iterrows()]

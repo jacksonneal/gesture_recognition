@@ -2,8 +2,8 @@
 
 # Customize these paths for your environment
 # -------------------------------------------
-train=.\datasets\train_test_split\train.csv
-test=.\datasets\train_test_split\test.csv
+train=.\datasets\sample_problem\train.csv
+test=.\datasets\sample_problem\test.csv
 # -------------------------------------------
 
 # Install dependencies.
@@ -59,7 +59,7 @@ dt-train-test: dt-train dt-test
 
 dt-train:
 	python -m models decision-tree train $(train) $(test) .\serialized\dt\dt.json \
-		--min-split 10 --max-depth 2 --max-split-eval 1000 --gini
+		--min-split 5 --max-depth 5 --max-split-eval 1000 --gini
 
 dt-test:
 	python -m models decision-tree test $(train) $(test) .\serialized\dt\dt.json \
@@ -70,7 +70,7 @@ ensemble-train-test: ensemble-train ensemble-test
 ensemble-train:
 	 python -m models ensemble train .\datasets\train_test_split\train.csv .\serialized\ensemble\ \
  		--k 9342 --n-dt 10 --n-nb 10 --boost --nf 40 --max-split-eval 10 \
- 		--max-depth 25 --min-split 10 --gini
+ 		--max-depth 25 --min-split 10
 
 ensemble-test:
 	python -m models ensemble test \

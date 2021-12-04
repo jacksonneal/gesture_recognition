@@ -15,7 +15,8 @@ X_test, y_test = test.iloc[:, :-1].values, test.iloc[:, -1].values
 
 s = StandardScaler()
 
-X_train, X_test = s.fit_transform(X_train), s.fit_transform(X_test)
+X_train = s.fit_transform(X_train)
+X_test = s.transform(X_test)
 
 RF = RandomForestClassifier(oob_score=True,
                             random_state=42,

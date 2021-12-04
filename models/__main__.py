@@ -191,7 +191,7 @@ if __name__ == '__main__':
             print(f"Average Score: {sum(scores) / len(scores)}")
 
         X_test, y_test = Preprocessor.access_data_labels(opts.action[2])
-        X_test = pd.DataFrame(s.fit_transform(X_test), columns=X_test.columns)
+        X_test = pd.DataFrame(s.transform(X_test), columns=X_test.columns)
 
         if opts.print:
             model.print()

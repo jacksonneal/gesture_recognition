@@ -25,16 +25,19 @@ if __name__ == '__main__':
 
     plt.plot(rock, label = "Rock", color=colors[0])
     plt.plot(scissors, label = "Scissors", color=colors[1])
-    #plt.plot(paper, label = "Paper", color=colors[2])
-    #plt.plot(ok, label = "OK", color=colors[3])
+    plt.plot(paper, label = "Paper", color=colors[2])
+    plt.plot(ok, label = "OK", color=colors[3])
 
     a = 0.2
     scale = 0.3
     plt.fill_between(range(64), rock - scale*r_std, rock + scale*r_std, alpha=a, color=colors[0])
     plt.fill_between(range(64), scissors - scale*s_std, scissors + scale*s_std, alpha=a, color=colors[1])
-    #plt.fill_between(range(64), paper - scale*p_std, paper + scale*p_std, alpha=a, color=colors[2])
-    #plt.fill_between(range(64), ok - scale*o_std, ok + scale*o_std, alpha=a, color=colors[3])
+    plt.fill_between(range(64), paper - scale*p_std, paper + scale*p_std, alpha=a, color=colors[2])
+    plt.fill_between(range(64), ok - scale*o_std, ok + scale*o_std, alpha=a, color=colors[3])
 
+    plt.title('Data distribution by feature: means and std deviations values (all gestures)')
+    plt.ylabel('Feature value')
+    plt.xlabel('Feature')
     plt.legend()
-    plt.savefig("..\\graphs\\Rock_Scissors.png", format="png")
+    plt.savefig("..\\graphs\\means_stdevs.png", format="png")
     plt.show()

@@ -4,7 +4,8 @@ import numpy as np
 import json
 
 import pandas as pd
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.naive_bayes import GaussianNB
 
 from models.model import Algo, Model
 from preprocessing.preprocessor import Preprocessor
@@ -181,7 +182,17 @@ if __name__ == '__main__':
     classifier.fit(X_train, y_train)
     classifier.save("data.txt")
 
+    print("from Scratch")
     classifier = NaiveBayesClassifier.load("data.txt")
     X_test, y_test = Preprocessor.access_data_labels("..\\datasets\\train_test_split\\test.csv")
     predictions = classifier.predict(X_test)
+    #accuracy(y_test, predictions)
+    print(confusion_matrix(y_test, predictions))
+    print("Accuracy is: " + str(accuracy_score(y_test, predictions)))
+
+    print("\nSciKit")  # This comes out with identical results
+    gnb = GaussianNB()
+    gnb.fit(X_train, y_train)
+    predictions = gnb.predict(X_test)
+    print(confusion_matrix(y_test, predictions))
     print("Accuracy is: " + str(accuracy_score(y_test, predictions)))

@@ -24,7 +24,7 @@ RF = RandomForestClassifier(oob_score=True,
                             n_jobs=-1)
 
 oob_list = []
-for n_trees in [15, 20, 30, 40, 50, 100, 150, 200, 300, 400]:
+for n_trees in [1, 15, 20, 30, 40, 50, 100, 150, 200, 300, 400]:
     RF.set_params(n_estimators=n_trees)
     RF.fit(X_train, y_train)
     oob_error = 1 - RF.oob_score_

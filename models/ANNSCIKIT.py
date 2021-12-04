@@ -197,3 +197,27 @@ if __name__ == '__main__':
     accuracyByLabel = classifier.acc_By_Label(X_train,y_train,X_test,y_test)
     print('Overall Accuracy is: %s' % classifier.score(X_test,y_test))
     print('The accuracy by label is: %s' % accuracyByLabel)
+
+
+    #Compare learning curve of one hidden layer to 4
+    class1 = ANN((60))
+    class2 = ANN((60,60,60,60))
+
+    class1.train(X_train,y_train)
+    class2.train(X_train,y_train)
+    score1 = class1.score(X_test,y_test)
+    score2 = class2.score(X_test,y_test)
+    curve1 =class1.getModel().loss_curve_
+    curve2 = class2.getModel().loss_curve_
+
+
+    plt.plot(curve1,label="1 hidden layer")
+    plt.plot(curve2,label = "4 hidden layers")
+    plt.title("Training error, 1 hidden layer vs 4")
+    plt.xlabel("n iterations")
+    plt.ylabel("error")  
+    plt.legend() 
+    plt.show()
+
+
+    print("The scores for 1 layer and 4 are %s,%s respectivley" % (score1,score2))

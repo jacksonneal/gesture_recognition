@@ -37,6 +37,15 @@ model:
 cython:
 	python setup.py build_ext --inplace &&
 
+bayes-train-test: bayes-train bayes-test
+
+bayes-train:
+	python -m models bayes train .\datasets\train_test_split\train.csv .\serialized\bayes\bayes.json
+
+bayes-test:
+	python -m models bayes test \
+ 		.\serialized\bayes\bayes.json .\datasets\train_test_split\test.csv --save .\output\bayes\ --cv
+
 ensemble-train-test: ensemble-train ensemble-test
 
 ensemble-train:

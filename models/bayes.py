@@ -116,7 +116,7 @@ class NaiveBayesClassifier(Algo):
         NOTE: Use the precomputed class wise probability stores in self.model and 
         the probability function
         """
-        probability = self.model[class_value][0][2] / self.training_data_len
+        probability = self.model[class_value][0][3] / self.training_data_len
         for i in range(len(self.model[class_value])):
             col, mean, std_dev, count = self.model[class_value][i]
             probability *= self.probability(record[col], mean, std_dev)

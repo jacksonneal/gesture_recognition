@@ -5,10 +5,17 @@ from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
 import seaborn as sns
 import pandas as pd
-from preprocessing.preprocessor import Preprocessor
+from sklearn.preprocessing import StandardScaler
 
-X_train, y_train = Preprocessor.access_data_labels(argv[0])
-X_test, y_test = Preprocessor.access_data_labels(argv[1])
+train = pd.read_csv(argv[1], header=None)
+X_train, y_train = train.iloc[:, :-1].values, train.iloc[:, -1].values
+
+test = pd.read_csv(argv[2], header=None)
+X_test, y_test = test.iloc[:, :-1].values, test.iloc[:, -1].values
+
+s = StandardScaler()
+
+X_train, X_test = s.fit_transform(X_train), s.fit_transform(X_test)
 
 RF = RandomForestClassifier(oob_score=True,
                             random_state=42,
@@ -24,7 +31,7 @@ for n_trees in [15, 20, 30, 40, 50, 100, 150, 200, 300, 400]:
 
 rf_oob_df = pd.concat(oob_list, axis=1).T.set_index('n_trees')
 
-sns.set_context('talk')
+sns.set_context('paper')
 sns.set_style('white')
 
 ax = rf_oob_df.plot(legend=False, marker='o', figsize=(14, 7), linewidth=5)

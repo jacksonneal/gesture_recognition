@@ -1,5 +1,11 @@
 # Makefile for Gesture Recognition project.
 
+# Customize these paths for your environment
+# -------------------------------------------
+train=.\datasets\train_test_split\train.csv
+test=.\datasets\train_test_split\test.csv
+# -------------------------------------------
+
 # Install dependencies.
 install:
 	pip install -r requirements.txt
@@ -35,16 +41,16 @@ model:
 
 # Compile with cython
 cython:
-	python setup.py build_ext --inplace &&
+	python setup.py build_ext --inplace
 
 bayes-train-test: bayes-train bayes-test
 
 bayes-train:
-	python -m models bayes train .\datasets\train_test_split\train.csv .\serialized\bayes\bayes.json
+	python -m models bayes train $(train) $(test) .\serialized\bayes\bayes.json
 
 bayes-test:
-	python -m models bayes test \
- 		.\serialized\bayes\bayes.json .\datasets\train_test_split\test.csv --save .\output\bayes\ --cv
+	python -m models bayes test $(train) $(test) .\serialized\bayes\bayes.json \
+ 		--save .\output\bayes\ --cv
 
 dt-train-test: dt-train dt-test
 

@@ -115,6 +115,7 @@ if __name__ == '__main__':
             model.print()
         predictions = model.predict(X_test)
         print("Accuracy is: " + str(accuracy_score(y_test, predictions)))
+        
         if opts.save is not None:
             # Save all results, highlight incorrect predictions
             res = np.append(X_test, y_test, axis=1)

@@ -4,7 +4,8 @@ import numpy as np
 import json
 
 import pandas as pd
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.naive_bayes import GaussianNB
 
 from models.model import Algo, Model
 from preprocessing.preprocessor import Preprocessor
@@ -116,7 +117,7 @@ class NaiveBayesClassifier(Algo):
         NOTE: Use the precomputed class wise probability stores in self.model and 
         the probability function
         """
-        probability = self.model[class_value][0][2] / self.training_data_len
+        probability = self.model[class_value][0][3] / self.training_data_len
         for i in range(len(self.model[class_value])):
             col, mean, std_dev, count = self.model[class_value][i]
             probability *= self.probability(record[col], mean, std_dev)
@@ -141,12 +142,13 @@ class NaiveBayesClassifier(Algo):
         return best_option
 
     def fit(self, X, Y):
-        dataset = np.concatenate((X, Y), axis=1)
-        self.calculate_stats_by_class(dataset)
+        X.insert(X.shape[1], "Y", Y)
+        # dataset = np.concatenate((X, Y), axis=1)
+        self.calculate_stats_by_class(X.values)
 
     def predict(self, test):
         predictions = list()
-        for row in test:
+        for row in test.values:
             output = self.make_prediction(row)
             predictions.append(output)
         return predictions
@@ -181,7 +183,17 @@ if __name__ == '__main__':
     classifier.fit(X_train, y_train)
     classifier.save("data.txt")
 
+    print("from Scratch")
     classifier = NaiveBayesClassifier.load("data.txt")
     X_test, y_test = Preprocessor.access_data_labels("..\\datasets\\train_test_split\\test.csv")
     predictions = classifier.predict(X_test)
+    #accuracy(y_test, predictions)
+    print(confusion_matrix(y_test, predictions))
+    print("Accuracy is: " + str(accuracy_score(y_test, predictions)))
+
+    print("\nSciKit")  # This comes out with identical results
+    gnb = GaussianNB()
+    gnb.fit(X_train, y_train)
+    predictions = gnb.predict(X_test)
+    print(confusion_matrix(y_test, predictions))
     print("Accuracy is: " + str(accuracy_score(y_test, predictions)))

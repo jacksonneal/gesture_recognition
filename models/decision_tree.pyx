@@ -1,6 +1,6 @@
 #!python
 #cython: language_level=3
-
+import copy
 import os
 import pandas as pd
 import numpy as np
@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor
 from scipy import stats
 from models.model import Algo, Model
+from collections import Counter
 
 MAX_PARALLEL = 20
 
@@ -66,7 +67,8 @@ class DecisionNode(Node):
         self.right.debug_print(indent + indent)
 
     def make_prediction(self, x):
-        if x[self.feature_index] <= self.threshold:
+        # print(x.describe())
+        if x.values[self.feature_index] <= self.threshold:
             return self.left.make_prediction(x)
         else:
             return self.right.make_prediction(x)
@@ -97,12 +99,13 @@ class SplitEngine:
     multiprocessing pool.
     """
 
-    def __init__(self, dataset, mode):
+    def __init__(self, parent_counts, mode):
         """
         Configure the dataset that we will evaluate splits for.
-        :param dataset:
+        :param parent_counts:
+        :param mode:
         """
-        self.dataset = dataset
+        self.parent_counts = parent_counts
         self.mode = mode
 
     def __call__(self, params):
@@ -111,16 +114,15 @@ class SplitEngine:
         :param params: defines split
         :return: split, new datasets, info_gain
         """
-        feature_index, sample_index = params
-        threshold = self.dataset[sample_index][feature_index]
-        dataset_left, dataset_right = DecisionTreeClassifier.split(self.dataset, feature_index,
-                                                                   threshold)
-        info_gain = DecisionTreeClassifier.information_gain(self.dataset[:, -1],
-                                                            dataset_left[:, -1],
-                                                            dataset_right[:, -1],
+        l_counts, r_counts, feature_index, threshold = params
+        # threshold = self.dataset[sample_index][feature_index]
+        # dataset_left, dataset_right = DecisionTreeClassifier.split(self.dataset, feature_index,
+        #                                                            threshold)
+        info_gain = DecisionTreeClassifier.information_gain(self.parent_counts,
+                                                            l_counts,
+                                                            r_counts,
                                                             self.mode)
-        split = {"dataset_right": dataset_right, "dataset_left": dataset_left,
-                 "feature_index": feature_index, "threshold": threshold, "info_gain": info_gain}
+        split = {"feature_index": feature_index, "threshold": threshold, "info_gain": info_gain}
         return split
 
 
@@ -206,26 +208,28 @@ class DecisionTreeClassifier(Algo):
           3. If stopping conditions are not met then recursively form the left
           and right subtree if info_gain is positive else return leaf value
         """
+        print(f"cur_depth: {cur_depth}, num_samples: {dataset.shape[0]})")
 
         # 1.
-        targets = dataset[:, -1]
-        features = dataset[:, :-1][0]
+        # targets = dataset.iloc[:, -1]
+        # features = dataset.iloc[:, :-1][0]
 
         # 1.b establish valid feature indices
         if self.valid_feature_indices is None:
             if self.num_valid_features is None:
-                self.valid_feature_indices = range(len(features))
+                self.valid_feature_indices = range(dataset.shape[1] - 1)
             else:
-                self.valid_feature_indices = random.sample(range(len(features)),
+                self.valid_feature_indices = random.sample(range(dataset.shape[1] - 1),
                                                            self.num_valid_features)
 
         # 2.
-        best_split = self.get_best_split(dataset, len(dataset))
-        if len(best_split["dataset_left"]) == 0 or len(best_split["dataset_right"]) == 0:
+        best_split = self.get_best_split(dataset, dataset.shape[0])
+        if best_split is not None and (len(best_split["dataset_left"]) == 0 or len(
+                best_split["dataset_right"]) == 0):
             best_split = None
 
         # 3.a
-        if cur_depth < self.max_depth and len(dataset) > self.min_samples_split \
+        if cur_depth < self.max_depth and dataset.shape[0] > self.min_samples_split \
                 and best_split is not None:
             left = self.build_tree(best_split["dataset_left"], cur_depth + 1)
             right = self.build_tree(best_split["dataset_right"], cur_depth + 1)
@@ -233,7 +237,7 @@ class DecisionTreeClassifier(Algo):
                                 best_split["info_gain"])
         # 3.b
         else:
-            return LeafNode(DecisionTreeClassifier.calculate_leaf_value(targets))
+            return LeafNode(DecisionTreeClassifier.calculate_leaf_value(dataset.iloc[:, -1]))
 
     def get_best_split(self, dataset, num_samples):
         """
@@ -245,18 +249,55 @@ class DecisionTreeClassifier(Algo):
         :param num_samples: num samples in dataset
         :return: best split
         """
+        labels = dataset['Y']
         split_params = []
         for feature_index in self.valid_feature_indices:
-            for sample_index in range(num_samples):
-                split_params.append((feature_index, sample_index))
+            ds_sorted = dataset.sort_values(by=dataset.columns[feature_index])
+            thresholds = ds_sorted.iloc[:, feature_index]
+            cur_labels = ds_sorted['Y']
+            means = self.moving_avg(thresholds.unique(), 2)
+            l_counts = {}
+            r_counts = Counter(labels)
 
-        if len(split_params) > self.max_split_eval * 2:
-            split_params = random.sample(split_params, self.max_split_eval)
+            # print(thresholds.shape)
+            # print(thresholds.describe())
 
-        split_engine = SplitEngine(dataset, self.mode)
+            i = 1
+            for j in range(len(means)):
+                while i < thresholds.shape[0] and thresholds.iloc[i - 1] <= means[j]:
+                    klass = cur_labels.iloc[i - 1]
+                    if klass not in l_counts.keys():
+                        l_counts[klass] = 0
+                    l_counts[klass] += 1
+                    r_counts[klass] -= 1
+
+                    if thresholds.iloc[i - 1] == thresholds.iloc[i]:
+                        i += 1
+                        continue
+
+                    split_params.append(
+                        (copy.deepcopy(l_counts), copy.deepcopy(r_counts), feature_index, means[j]))
+                    i += 1
+
+        # if len(split_params) > self.max_split_eval * 2:
+        #     split_params = random.sample(split_params, self.max_split_eval)
+
+        split_engine = SplitEngine(Counter(labels), self.mode)
         splits = self.pool.map(split_engine, split_params)
 
-        return max(splits, key=lambda x: x["info_gain"])
+        # splits = list(map(split_engine, split_params))
+
+        best_split = max(splits, key=lambda x: x["info_gain"], default=None)
+        if best_split is None:
+            return best_split
+        left, right = self.split(dataset, best_split["feature_index"], best_split["threshold"])
+        best_split["dataset_left"] = left
+        best_split["dataset_right"] = right
+        return best_split
+
+    @staticmethod
+    def moving_avg(x, window):
+        return np.convolve(x, np.ones(window), 'valid')
 
     @staticmethod
     def split(dataset, feature_index, threshold):
@@ -267,7 +308,8 @@ class DecisionTreeClassifier(Algo):
         :param threshold: threshold to split feature on
         :return: left and right splits of dataset
         """
-        return DecisionTreeClassifier.split_by_cond(dataset, dataset[:, feature_index] <= threshold)
+        return DecisionTreeClassifier.split_by_cond(dataset,
+                                                    dataset.iloc[:, feature_index] <= threshold)
 
     @staticmethod
     def split_by_cond(arr, cond):
@@ -284,9 +326,9 @@ class DecisionTreeClassifier(Algo):
         """
         Function to calculate information gain. This function subtracts the combined information
         of the child node from the parent node.
-        :param parent: parent node
-        :param l_child: left child node
-        :param r_child: right child node
+        :param parent: parent counts
+        :param l_child: left child counts
+        :param r_child: right child counts
         :param mode: type of information gain to be used
         :return: information gain
         """
@@ -309,10 +351,10 @@ class DecisionTreeClassifier(Algo):
     def entropy(y):
         """
         Extracts the class labels and calculates the entropy.
-        :param y: labels
+        :param y: labels counts
         :return: entropy
         """
-        vc = pd.Series(y).value_counts(normalize=True, sort=False)
+        vc = pd.Series(y.values())  #  pd.Series(y).value_counts(normalize=True, sort=False)
         base = 2
         entropy = -(vc * np.log(vc) / np.log(base)).sum()
 
@@ -322,17 +364,15 @@ class DecisionTreeClassifier(Algo):
     def gini_index(y):
         """
         Extracts the class labels and calculates the gini index.
-        :param y: target labels
+        :param y: target labels counts
         :return: gini index
         """
-        label_map = {}
-        for label in y:
-            if label not in label_map:
-                label_map[label] = 0
-            label_map[label] += 1
         total = 0
-        for value in label_map.values():
-            total += (value / len(y)) ** 2
+        n = 0
+        for value in y.values():
+            n += value
+        for value in y.values():
+            total += (value / n) ** 2
         return 1 - total
 
     @staticmethod
@@ -353,8 +393,9 @@ class DecisionTreeClassifier(Algo):
         :param Y: Target
         :return: None
         """
-        dataset = np.concatenate((X, Y), axis=1)
-        self.root = self.build_tree(dataset)
+        X.insert(X.shape[1], "Y", Y)
+        # dataset = np.concatenate((X, Y), axis=1)
+        self.root = self.build_tree(X)
 
     def predict(self, X):
         """
@@ -363,4 +404,4 @@ class DecisionTreeClassifier(Algo):
         :param X: Matrix of features
         :return: Predictions using the make_prediction function
         """
-        return [self.root.make_prediction(x) for x in X]
+        return [self.root.make_prediction(x) for _, x in X.iterrows()]

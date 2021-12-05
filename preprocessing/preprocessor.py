@@ -54,7 +54,7 @@ class Preprocessor:
         :return: data, labels
         """
         dataframe = pd.read_csv(file, header=None)
-        return dataframe.iloc[:, :-1].values, dataframe.iloc[:, -1].values.reshape(-1, 1)
+        return dataframe.iloc[:, :-1], dataframe.iloc[:, -1]
 
 
 if __name__ == "__main__":

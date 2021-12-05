@@ -10,7 +10,7 @@ from models.bayes import NaiveBayesClassifier
 from models.model import Algo, Model
 
 MODEL_OFFSET = 0  # Naming offset for training ensemble in parts
-MAX_BOOST = 100  # maximum number of samples to boost
+MAX_BOOST = 50  # maximum number of samples to boost
 
 
 class Ensemble(Algo):
@@ -94,32 +94,51 @@ class Ensemble(Algo):
         dataset = X
         # dataset = np.append(X, Y, axis=1)
         for i, algo in enumerate(self.algos):
-            print(dataset.describe())
             bootstrap_sample = dataset.sample(self.k,
                                               replace=True)
             x, y = bootstrap_sample.iloc[:, :-1], bootstrap_sample.iloc[:, -1]
             algo.fit(x, y)
             if self.boosting:
                 failed = []
-                for row in dataset:
-                    x, y = row[:-1], row[-1]
-                    if algo.predict([x])[0] != y:
-                        failed.append(row)
+                for row in dataset.values:
+                    if len(failed) < MAX_BOOST:
+                        x, y = row[:-1], row[-1]
+                        if algo.predict(pd.DataFrame([x]))[0] != y:
+                            failed.append(row)
                 if len(failed) > MAX_BOOST:
                     failed = random.sample(failed, MAX_BOOST)
                 for row in failed:
-                    dataset = np.vstack([dataset, row])
+                    dataset = pd.DataFrame(np.vstack([dataset, row]))
 
             print(f"Trained model: {i}")
 
     def predict(self, X):
+        predictions = []
+        for algo in self.algos:
+            prediction = algo.predict(X)
+            predictions.append(prediction)
+
         ret = []
-        for x in X:
-            predictions = {}
-            for algo in self.algos:
-                prediction = algo.predict([x])[0]
-                if prediction not in predictions:
-                    predictions[prediction] = 0
-                predictions[prediction] += 1
-            ret.append(max(predictions, key=predictions.get))
+        for i in range(X.shape[0]):
+            counts = {}
+            for j in range(len(self.algos)):
+                pred = predictions[j][i]
+                if pred not in counts:
+                    counts[pred] = 0
+                counts[pred] += 1
+            ret.append(max(counts, key=counts.get))
         return ret
+
+        # for j in range(len(self.algos)):
+        #     counts = {}
+        #     for i in range(
+        # ret = []
+        # for x in X.values:
+        #     predictions = {}
+        #     for algo in self.algos:
+        #         prediction = algo.predict(pd.DataFrame([x]))[0]
+        #         if prediction not in predictions:
+        #             predictions[prediction] = 0
+        #         predictions[prediction] += 1
+        #     ret.append(max(predictions, key=predictions.get))
+        # return ret

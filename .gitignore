@@ -20,3 +20,7 @@ venv/
 *.obj
 *.so
 build/
+
+# Serialized and Output
+serialized/
+output/

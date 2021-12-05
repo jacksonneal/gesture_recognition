@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 
 import decision_tree
-from models.bagging import Bagging
+from models.ensemble import Ensemble
+from models.bayes import NaiveBayesClassifier
 from preprocessing.preprocessor import Preprocessor
 from decision_tree import DecisionTreeClassifier
 # from models.decision_tree import DecisionTreeClassifier
@@ -63,17 +64,25 @@ if __name__ == '__main__':
     # DecisionTree Argument: GiniIndex
     parser.add_argument("--gini", action="store_true", help="Use gini index instead of entropy.")
 
-    # Bagging Argument: Number of bootstrapped samples per model
+    # Ensemble Argument: Number of samples per model
     parser.add_argument("--k", type=int, default=1000, help="Num bootstrapped samples per model.")
 
-    # Bagging Argument: Number of DecisionTrees to run
+    # Ensemble Argument: Number of DecisionTrees to run
     parser.add_argument("--n-dt", type=int, default=10, dest="num_decision_trees",
                         help="Number of decision trees in ensemble.")
 
-    # RandomForest Num Features Argument: Number of features to be considered in each tree
-    parser.add_argument("--rf-nf", type=int, default=None, dest="num_valid_features",
-                        help="Number of features to be sampled and considered in each tree of "
-                             "random forest.")
+    # Ensemble Argument: Number of Bayes to run
+    parser.add_argument("--n-nb", type=int, default=10, dest="num_naive_bayes",
+                        help="Number of naive bayes classifiers in ensemble.")
+
+    # Ensemble Argument: Number of features to be considered in each model
+    parser.add_argument("--nf", type=int, default=None, dest="num_valid_features",
+                        help="Number of features to be sampled and considered in each model of "
+                             "ensemble.")
+
+    # Ensemble Argument: boost by testing against the given test dataset
+    parser.add_argument("--boost", action="store_true",
+                        help="Indicate that we should do boosting.")
 
     # Configurable parallelism
     parser.add_argument("--parallel", type=int, default=20,
@@ -88,11 +97,27 @@ if __name__ == '__main__':
         if opts.model == Model.decision_tree:
             model = DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval,
                                            None, opts.gini, opts.num_valid_features)
-        elif opts.model == Model.bagging:
+
+        elif opts.model == Model.bayes:
+            model = NaiveBayesClassifier()
+
+        elif opts.model == Model.ensemble:
+            bayes = [NaiveBayesClassifier(opts.num_valid_features) for _ in
+                     range(opts.num_naive_bayes)]
+
             trees = [DecisionTreeClassifier(opts.min_split, opts.max_depth, opts.max_split_eval,
                                             None, opts.gini, opts.num_valid_features) for _ in
                      range(opts.num_decision_trees)]
-            model = Bagging(trees, opts.k)
+
+            algos = []
+            for i in range(len(bayes)):
+                algos.append(bayes[i])
+                if i < len(trees):
+                    algos.append(trees[i])
+            for i in range(len(bayes), len(trees)):
+                algos.append(trees[i])
+
+            model = Ensemble(algos, opts.k, opts.boost)
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 
@@ -105,8 +130,10 @@ if __name__ == '__main__':
     elif opts.action[0] == "test":
         if opts.model == Model.decision_tree:
             model = DecisionTreeClassifier.load(opts.action[1])
-        elif opts.model == Model.bagging:
-            model = Bagging.load(opts.action[1])
+        elif opts.model == Model.bayes:
+            model = NaiveBayesClassifier.load(opts.action[1])
+        elif opts.model == Model.ensemble:
+            model = Ensemble.load(opts.action[1])
         else:
             raise ValueError(f"Unsupported model type {opts.model}")
 

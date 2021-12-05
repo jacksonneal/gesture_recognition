@@ -113,7 +113,7 @@ class ANN:
             layout = []
             #Create tuple of nodes
             for i in range(layer):
-                layout.append(nodes)
+                layout.append(nodes//layer + 6)
             layout = tuple(layout)
             #
             model = ANN(layout,)

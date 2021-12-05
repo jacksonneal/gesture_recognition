@@ -69,7 +69,7 @@ ensembleb-train-test: ensembleb-train ensembleb-test
 
 ensembleb-train:
 	 python -m models ensemble train $(train) $(test) .\serialized\ensembleb\ \
- 		--k 9342 --n-dt 0 --n-nb 1000 --nf 6 --boost
+ 		--k 9342 --n-dt 0 --n-nb 1000 --nf 40 --boost
 
 ensembleb-test:
 	python -m models ensemble  test $(train) $(test) .\serialized\ensembleb\ \
@@ -79,19 +79,19 @@ rf-train-test: rf-train rf-test
 
 rf-train:
 	python -m models ensemble train $(train) $(test) .\serialized\ensemblerf\ \
-		--min-split 2 --max-depth 100000 --gini \
- 		--k 9342 --n-dt 2 --n-nb 0 --nf 6 --boost
+		--min-split 3 --max-depth 100000 --gini \
+ 		--k 9342 --n-dt 40 --n-nb 0 --nf 48 --boost
 
 rf-test:
 	python -m models ensemble  test $(train) $(test) .\serialized\ensemblerf\ \
- 		--save .\output\ensemblebrf\ --cv
+ 		--save .\output\ensemblerf\ --cv
 
 ensemble-mix-train-test: ensemble-mix-train ensemble-mix-test
 
 ensemble-mix-train:
 	python -m models ensemble train $(train) $(test) .\serialized\ensemblemix\ \
 		--min-split 2 --max-depth 100000 --gini \
- 		--k 9342 --n-dt 100 --n-nb 100 --nf 6 --boost
+ 		--k 9342 --n-dt 10 --n-nb 100 --nf 40 --boost
 
 ensemble-mix-test:
 	python -m models ensemble  test $(train) $(test) .\serialized\ensemblemix\ \

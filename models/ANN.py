@@ -14,6 +14,7 @@ class ArtificialNeuralNetwork:
         self.n_hidden = n_hidden
 
         self.network = None
+        self.dropout = []
         
 
     
@@ -27,6 +28,7 @@ class ArtificialNeuralNetwork:
         hiddenLayer = [{'weights':[random() for i in range(n_inputs+1)]} for i in range(n_hidden)]
         #Add to the array
         network.append(hiddenLayer)
+        
         #create ouput and save to list
         outputLayer = [{'weights':[random() for i in range(n_hidden+1)]} for i in range(n_outputs)]
         network.append(outputLayer)
@@ -161,9 +163,11 @@ class ArtificialNeuralNetwork:
     def train_network(self,network, train, l_rate, n_epoch, n_outputs):
         #loop through number of epochs
         for i in range(n_epoch):
+            
             for row in train:
                 #get outputs by propogating the row in network
                 outputs = self.forward_propagate(network, row)
+                
                 #find the expected for each output
                 expected = [0 for i in range(n_outputs)]
                 #update the expected[label]
@@ -173,12 +177,20 @@ class ArtificialNeuralNetwork:
                 #
                 self.update_weights(network, row, l_rate)
 
+                
+
+                
+            
+
 
     # Make a prediction with a network
     def predict(self,network, row):
         outputs = self.forward_propagate(network, row)
         #return the index of output neuron with highest value
         return outputs.index(max(outputs))
+
+    #new function to 
+
 
     # Calculate accuracy percentage
     def accuracy_metric(self,actual, predicted):
@@ -191,8 +203,46 @@ class ArtificialNeuralNetwork:
             #increment correct if actual = predicted
             if actual[i] == predicted[i]:
                 correct += 1
+
+        #print(total)
+        #print(correct)
             
-        return 100 * (correct / total)
+        return 100 * (correct / float(total))
+
+
+    #Find accuracy of each label
+    def label_accuracy(self,actual, predicted):
+        total = len(predicted)
+        errorCounts = [0 for i in range(4)]
+        counts = [0 for i in range(4)]
+
+        for i in range(total):
+            
+            if actual[i] == 0:
+                counts[0] += 1
+            elif actual[i] == 1:
+                counts[1] += 1
+            elif actual[i] ==2:
+                counts[2] += 1
+            else:
+                counts[3] += 1
+            
+            #count correct
+            if actual[i] == predicted[i]:
+                if actual[i] == 0:
+                    errorCounts[0] += 1
+                elif actual[i] ==1:
+                    errorCounts[1] += 1
+                elif actual[i] ==2:
+                    errorCounts[2] += 1
+                else:
+                    errorCounts[3] += 1
+
+        #print('correct label 0: %s' %counts[0])
+        #print('correct count: %s' %errorCounts[0])
+
+        return [100*(a / float(b)) for a,b in zip(errorCounts,counts)]
+
 
 
     # Evaluate an algorithm using a cross validation split
@@ -201,6 +251,8 @@ class ArtificialNeuralNetwork:
         folds = self.cross_validation_split(dataset,n_folds)
         #Loop over each fold to remove
         accuracy = []
+        labelAcc = []
+
         for fold in folds:
             #make new list of folds
             newFolds = list(folds)
@@ -219,18 +271,22 @@ class ArtificialNeuralNetwork:
                 copyRow[-1] = None
                 test.append(copyRow)
             #make a prediction
-            #algorith is back propagation
             prediction = self.back_propagation(train,test,*args)
             actual = [row[-1] for row in fold]
+
+            print(prediction)
+            
+            
             #calculate accuracy and save to list
-            accuracy.append(self.accuracy_metric(prediction,actual))
+            labelAcc.append(self.label_accuracy(actual,prediction))
+            accuracy.append(self.accuracy_metric(actual,prediction))
                 
                 
             #Look into train
 
 
 
-        return accuracy
+        return accuracy,labelAcc
 
 
 
@@ -292,23 +348,30 @@ def normalize(dataset, minmax=minmax):
 
 
 
-
+#main funciton to produce model analysis
 def main():
     import os
+    from sklearn.neural_network import MLPClassifier
+    import numpy as np
+    from sklearn.model_selection import train_test_split
+
 
     seed(1)
     # load and prepare data
     working_directory = os.getcwd()
     file_path = working_directory + '\datasets\\train_test_split\\train.csv'
-    #file_path = working_directory + '\yeastData.csv'
+    #file_path = working_directory + '\seeds.csv'
     
     data = load_csv(file_path)
-    data = data[1:]
+    dataset = data[1:]
 
     #shuffle data
     shuffle(data)
 
-    data = data[0:1000]
+    data = dataset[0:500]
+    #dataTest = dataset[500:600]
+
+    #convert data
     for i in range(len(data[0])-1):
         convert_to_float(data, i)
     convert_to_integer(data,-1)
@@ -317,17 +380,25 @@ def main():
     dataset = normalize(data)
 
     # evaluate algorithm
-    n_folds = 10
-    l_rate = 0.01
-    n_epoch = 700
-    n_hidden = 8
+    n_folds = 5
+    l_rate = 0.1
+    n_epoch = 50
+    n_hidden = 35
     
-    
+   
 
 
     model = ArtificialNeuralNetwork(dataset,n_folds,l_rate,n_epoch,n_hidden)
-    count = model.evaluate_algorithm(dataset, n_folds, l_rate,n_epoch, n_hidden)
+    
+    
+    
+    count,labelCount = model.evaluate_algorithm(dataset, n_folds, l_rate,n_epoch, n_hidden)
+
+    
+
+
     print('Scores: %s' % count)
+    print('Label scores: %s' % labelCount)
     print('Mean Accuracy: %.3f%%' % (sum(count)/float(len(count))))
 
 if __name__ == "__main__":

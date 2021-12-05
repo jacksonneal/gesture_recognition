@@ -46,9 +46,11 @@ All of the build & execution commands are organized in the Makefile.
     - `make bayes-train-test`
 11) Run DecisionTree:
     - `make dt-train-test`
-12) Run RandomForest:
+12) Run Ensemble (Bayes):
+    - `make ensembleb-train-test`
+13) Run RandomForest:
     - `make rf-train-test`
-13) Run Ensemble (Bayes and DecisionTree):
-    - `make ensemble-train-test`
-19) View all run options and parameters for custom runs through module directly:
+14) Run Ensemble (Bayes and DecisionTree):
+    - `make ensemble-mix-train-test`
+15) View all run options and parameters for custom runs through module directly:
     - `make help`

@@ -108,7 +108,7 @@ class ANN:
         nodes = 15
 
         for layer in range(1,6):
-            model = ANN()
+            model = ANN((node,))
             #create new classifier
             layout = []
             #Create tuple of nodes
